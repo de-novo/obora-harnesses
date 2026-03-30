@@ -1,0 +1,13 @@
+{
+  "name": "todo-cli-single-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "todo-cli": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node ./src/index.js",
+    "test:smoke": "node ./src/index.js help && node ./src/index.js add \"sample task\" && node ./src/index.js list"
+  }
+}

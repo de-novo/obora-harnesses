@@ -1,0 +1,151 @@
+name: todo-cli-enhanced
+version: "1.0"
+description: "Long-running product harness for a small Todo CLI with planning, contracting, implementation, and evaluation"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Product planner
+    temperature: 0.2
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Sprint contractor
+    temperature: 0.1
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: CLI implementation agent
+    temperature: 0.1
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: CLI evaluator
+    temperature: 0
+
+steps:
+  - name: plan_product
+    agent: planner
+    input:
+      task: |
+        Create a concise product brief for a local Todo CLI.
+
+        Write to artifacts/product-brief.md.
+
+        Include:
+        - target user
+        - primary use cases
+        - required commands
+        - non-goals
+        - quality expectations
+
+  - name: expand_spec
+    agent: planner
+    depends_on: [plan_product]
+    input:
+      task: |
+        Read artifacts/product-brief.md.
+
+        Write a practical implementation spec to artifacts/spec.md.
+
+        Include:
+        - command surface
+        - persistence approach
+        - expected UX behavior
+        - error handling expectations
+        - implementation constraints
+
+  - name: build_backlog
+    agent: planner
+    depends_on: [expand_spec]
+    input:
+      task: |
+        Read artifacts/product-brief.md and artifacts/spec.md.
+
+        Write a milestone/backlog plan to artifacts/backlog.json.
+
+        Keep it small. The first milestone should be enough to produce a usable minimum Todo CLI.
+
+  - name: define_contract
+    agent: contractor
+    depends_on: [build_backlog]
+    input:
+      task: |
+        Read:
+        - artifacts/product-brief.md
+        - artifacts/spec.md
+        - artifacts/backlog.json
+
+        Write EXACTLY one JSON object to artifacts/sprint-contract.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "scope":"...",
+          "acceptanceCriteria":["..."],
+          "nonGoals":["..."],
+          "qaChecks":["..."]
+        }
+
+        The contract should define the first implementation slice for the Todo CLI.
+
+  - name: implement_contract
+    agent: generator
+    depends_on: [define_contract]
+    input:
+      task: |
+        Read:
+        - artifacts/product-brief.md
+        - artifacts/spec.md
+        - artifacts/sprint-contract.json
+        - artifacts/qa-report.json if it exists
+
+        Implement the Todo CLI inside the current working directory.
+
+        Requirements:
+        - keep the implementation small and runnable
+        - satisfy the sprint contract first
+        - avoid unnecessary extra features
+        - if repairing, change only what is needed to address evaluator feedback
+
+        Also write a short implementation note to artifacts/implementation-notes.md.
+
+  - name: evaluate_contract
+    agent: evaluator
+    depends_on: [implement_contract]
+    on_fail:
+      goto: implement_contract
+      max_iterations: 2
+      escalate_on_exhaust: fail
+    input:
+      task: |
+        Read:
+        - artifacts/product-brief.md
+        - artifacts/spec.md
+        - artifacts/sprint-contract.json
+        - artifacts/implementation-notes.md if it exists
+
+        Evaluate the current Todo CLI artifact.
+
+        Check for:
+        - command coverage
+        - storage correctness
+        - help output clarity
+        - understandable error handling
+        - obvious maintainability issues
+
+        Write a structured QA report to artifacts/qa-report.json.
+
+        Then return ONLY a strict ValidationResult JSON object.
+        No markdown fences. No prose.
+
+        ValidationResult shape:
+        {
+          "passed": true or false,
+          "summary": "...",
+          "failedChecks": [
+            {"name":"...","message":"...","file":"..."}
+          ],
+          "signature": "stable-short-signature"
+        }

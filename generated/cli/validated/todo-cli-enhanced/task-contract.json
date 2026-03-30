@@ -1,0 +1,23 @@
+{
+  "artifact": "todo-cli-enhanced",
+  "scope": "minimum lovable todo cli",
+  "acceptanceCriteria": [
+    "help output documents all required commands",
+    "add persists a new todo item to local JSON storage",
+    "list prints current todos in a readable format",
+    "done marks an existing todo as completed",
+    "remove deletes a todo by id",
+    "clear resets the data store without corrupting JSON"
+  ],
+  "nonGoals": [
+    "cloud sync",
+    "multi-user collaboration",
+    "network services"
+  ],
+  "evaluationChecks": [
+    "command coverage",
+    "storage correctness",
+    "error handling clarity",
+    "maintainable file structure"
+  ]
+}

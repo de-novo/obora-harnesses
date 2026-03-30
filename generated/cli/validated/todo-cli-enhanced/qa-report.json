@@ -1,0 +1,26 @@
+{
+  "artifact": "todo-cli-enhanced",
+  "checks": [
+    {
+      "name": "help-output",
+      "status": "planned",
+      "message": "Help output should document commands and filters."
+    },
+    {
+      "name": "storage-correctness",
+      "status": "planned",
+      "message": "JSON storage should remain valid across add/done/remove/clear operations."
+    },
+    {
+      "name": "command-coverage",
+      "status": "planned",
+      "message": "Required commands should be runnable from CLI."
+    },
+    {
+      "name": "error-handling",
+      "status": "planned",
+      "message": "Invalid ids and unknown commands should return understandable errors."
+    }
+  ],
+  "summary": "Initial QA scaffold created. Runtime smoke execution should update this artifact in later harness runs."
+}
