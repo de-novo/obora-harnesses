@@ -18,7 +18,7 @@ steps:
   - name: discover_target
     agent: solver
     config:
-      maxToolRounds: 256
+      maxToolRounds: 128
     input:
       task: |
         Use file tools only.
@@ -40,9 +40,42 @@ steps:
         - no explanation in the file
         - prefer files directly implicated by traceback paths, function names, classes, warnings, or failing behavior
 
-  - name: generate_edit
+  - name: repair_contract
     agent: solver
     depends_on: [discover_target]
+    input:
+      task: |
+        Use file tools only.
+
+        First read:
+        - artifacts/problem.txt
+        - artifacts/target_file.txt
+
+        Then read the real target file from the repository using the path in artifacts/target_file.txt.
+
+        Write EXACTLY one JSON object to artifacts/repair_contract.json.
+        No markdown fences. No prose.
+
+        Required JSON schema:
+        {
+          "target_file":"...",
+          "suspected_bug_locus":"...",
+          "change_intent":"...",
+          "success_criteria":["..."],
+          "do_not_touch":["..."]
+        }
+
+        Rules:
+        - target_file must exactly match artifacts/target_file.txt
+        - suspected_bug_locus should name the most relevant function/method/class/block in the chosen file
+        - change_intent should be a short concrete statement of what must change
+        - success_criteria should contain 1-3 concise, testable outcomes
+        - do_not_touch should contain 0-3 concise constraints that reduce unnecessary edits
+        - keep the contract short, specific, and grounded in the current target file
+
+  - name: generate_edit
+    agent: solver
+    depends_on: [discover_target, repair_contract]
     config:
       repair_loop:
         enabled: true
@@ -56,6 +89,7 @@ steps:
         First read:
         - artifacts/problem.txt
         - artifacts/target_file.txt
+        - artifacts/repair_contract.json
         - artifacts/validation-report.json if it exists
 
         Then read the real target file from the repository using the path in artifacts/target_file.txt.
@@ -68,10 +102,12 @@ steps:
 
         Rules:
         - target_file must exactly match artifacts/target_file.txt
+        - align the edit with artifacts/repair_contract.json
         - old_string must be exact text from the real target file
         - old_string should be the smallest exact contiguous span that is sufficient for the fix; avoid large class or module blocks when a few lines are enough
         - new_string must be the replacement text
         - modify only what is needed to solve the issue
+        - respect do_not_touch constraints unless validation feedback proves they must change
         - on repair attempts, use latest validation feedback and change only what failed
 
   - name: validate_edit
@@ -92,17 +128,19 @@ steps:
         Read these files:
         - artifacts/problem.txt
         - artifacts/target_file.txt
+        - artifacts/repair_contract.json
         - artifacts/edit.json
 
         Also read the real target file whose path is written in artifacts/target_file.txt.
 
         Validate:
         1. artifacts/target_file.txt contains exactly one plausible repo-relative source file path
-        2. artifacts/edit.json is valid JSON
-        3. it has target_file, old_string, new_string string fields
-        4. target_file exactly matches artifacts/target_file.txt
-        5. old_string exists in the target file
-        6. the edit is specific to the issue and chosen file
+        2. artifacts/repair_contract.json is valid JSON and its target_file matches artifacts/target_file.txt
+        3. artifacts/edit.json is valid JSON
+        4. it has target_file, old_string, new_string string fields
+        5. target_file exactly matches artifacts/target_file.txt
+        6. old_string exists in the target file
+        7. the edit is specific to the issue, chosen file, and repair contract
 
         Write a human-readable report to artifacts/validation-report.json.
 

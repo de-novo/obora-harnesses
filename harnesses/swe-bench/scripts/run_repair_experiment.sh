@@ -2,19 +2,21 @@
 set -u
 set -o pipefail
 
-cd /Users/denovo/workspace/github/obora-kit || exit 1
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+cd "$REPO_ROOT" || exit 1
 
 if [ -z "${ZAI_API_KEY:-}" ]; then
   export ZAI_API_KEY=$(jq -r '.providers.zai.apiKey // empty' ~/.obora/auth.json)
   echo "Loaded ZAI_API_KEY from auth.json"
 fi
 
-SAMPLES_DIR="experiments/swe-bench-harness/samples-no-answer"
-RESULTS_DIR="experiments/swe-bench-harness/results-repair"
+SAMPLES_DIR="${SAMPLES_DIR:-$REPO_ROOT/harnesses/swe-bench/samples-no-answer}"
+RESULTS_DIR="${RESULTS_DIR:-$REPO_ROOT/harnesses/swe-bench/results-repair}"
 SAMPLE_ARG=${1:-5}
-HELPER="/Users/denovo/workspace/github/obora-kit/experiments/swe-bench-harness/structured_repair_helper.py"
-WORKFLOW="${WORKFLOW:-/Users/denovo/workspace/github/obora-kit/experiments/swe-bench-harness/structured-cli-workflow.yaml}"
-CONFIG="/Users/denovo/workspace/github/obora-kit/experiments/swe-bench-harness/.obora/config.yaml"
+HELPER="$SCRIPT_DIR/structured_repair_helper.py"
+WORKFLOW="${WORKFLOW:-$REPO_ROOT/harnesses/swe-bench/workflows/obora-os-workflow.yaml}"
+CONFIG="${CONFIG:-$REPO_ROOT/harnesses/swe-bench/configs/obora/config.yaml}"
 OBORA_BIN="${OBORA_BIN:-obora}"
 
 PASS=0
@@ -100,6 +102,12 @@ for SAMPLE_FILE in "${SAMPLE_FILES[@]}"; do
   ATTEMPT=1
   MAX_ATTEMPTS=3
   RUN_OK=false
+  FAILURE_TYPE=""
+  FAILURE_SIGNATURE=""
+  FAILED_STEP=""
+  RETRY_COUNT=0
+  POST_VALIDATE_RETRY_COUNT=0
+  MAX_POST_VALIDATE_RETRIES=1
   while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
     : > "$RESULT_DIR/obora.log"
     if (cd "$REPO_DIR" && "$OBORA_BIN" run "$WORKFLOW" --config "$CONFIG" --output-dir "$RESULT_DIR" --timeout ${OBORA_RUN_TIMEOUT_MS:-240000}) 2>&1 | tee "$RESULT_DIR/obora.log"; then
@@ -107,25 +115,69 @@ for SAMPLE_FILE in "${SAMPLE_FILES[@]}"; do
       break
     fi
 
+    FAILED_STEP=$(python3 - <<'PY' "$RESULT_DIR/obora.log"
+from pathlib import Path
+import re, sys
+text = Path(sys.argv[1]).read_text(errors='ignore')
+steps = re.findall(r'→\s*([^\x1b\[]+)', text)
+print(steps[-1].strip() if steps else '')
+PY
+)
+
     if grep -q '429 Rate limit reached for requests' "$RESULT_DIR/obora.log"; then
+      FAILURE_TYPE="RATE_LIMIT"
+      FAILURE_SIGNATURE="429-rate-limit"
       SLEEP_SECS=$((ATTEMPT * 20))
       echo "⚠️ 429 rate limit, retrying in ${SLEEP_SECS}s..."
+      RETRY_COUNT=$((RETRY_COUNT + 1))
       sleep "$SLEEP_SECS"
       ATTEMPT=$((ATTEMPT + 1))
       continue
     fi
 
     if grep -q '\[SDK_8002\] Execution cancelled' "$RESULT_DIR/obora.log"; then
+      FAILURE_TYPE="SDK_8002"
+      FAILURE_SIGNATURE="sdk-8002-execution-cancelled"
       if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
-        echo "⚠️ SDK_8002 execution cancelled, retrying..."
-        sleep 5
+        if [ "$FAILED_STEP" = "discover_target" ]; then
+          SLEEP_SECS=$((ATTEMPT * 15))
+          echo "⚠️ SDK_8002 during discover_target, retrying in ${SLEEP_SECS}s with reduced step pressure..."
+        else
+          SLEEP_SECS=5
+          echo "⚠️ SDK_8002 execution cancelled, retrying in ${SLEEP_SECS}s..."
+        fi
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        sleep "$SLEEP_SECS"
         ATTEMPT=$((ATTEMPT + 1))
         continue
       fi
     fi
 
+    if [ -z "$FAILURE_TYPE" ]; then
+      FAILURE_TYPE="UNKNOWN_RUNTIME"
+      FAILURE_SIGNATURE="unknown-runtime-failure"
+    fi
     break
   done
+
+  python3 - <<'PY' "$RESULT_DIR/runtime-failure.json" "$SAMPLE_ID" "$REPO" "$WORKFLOW" "$OBORA_BIN" "$FAILED_STEP" "$FAILURE_TYPE" "$FAILURE_SIGNATURE" "$ATTEMPT" "$RETRY_COUNT" "$RUN_OK"
+import json, sys
+out, sample_id, repo, workflow, obora_bin, failed_step, failure_type, failure_signature, attempt, retry_count, run_ok = sys.argv[1:]
+payload = {
+  "sample_id": sample_id,
+  "repo": repo,
+  "workflow": workflow,
+  "obora_bin": obora_bin,
+  "failed_step": failed_step,
+  "failure_type": failure_type,
+  "failure_signature": failure_signature,
+  "attempt_count": int(attempt),
+  "retry_count": int(retry_count),
+  "run_ok": run_ok.lower() == 'true',
+}
+with open(out, 'w') as f:
+    json.dump(payload, f, indent=2)
+PY
 
   if [ "$RUN_OK" = true ]; then
     if [ -f "$ARTIFACTS_DIR/edit.json" ]; then
@@ -159,9 +211,68 @@ for SAMPLE_FILE in "${SAMPLE_FILES[@]}"; do
       echo "PASS" > "$RESULT_DIR/status.txt"
       PASS=$((PASS + 1))
     else
-      echo "❌ FAIL: Final validation failed"
-      echo "FAIL_PATCH" > "$RESULT_DIR/status.txt"
-      FAIL=$((FAIL + 1))
+      FINAL_SIGNATURE=$(jq -r '.signature // empty' "$RESULT_DIR/final-validation.json" 2>/dev/null || true)
+      if [ $POST_VALIDATE_RETRY_COUNT -lt $MAX_POST_VALIDATE_RETRIES ] && [ -n "$FINAL_SIGNATURE" ]; then
+        echo "⚠️ Deterministic final validation failed (${FINAL_SIGNATURE}); feeding back once more into repair loop..."
+        cp "$RESULT_DIR/final-validation.json" "$ARTIFACTS_DIR/validation-report.json"
+        POST_VALIDATE_RETRY_COUNT=$((POST_VALIDATE_RETRY_COUNT + 1))
+        RUN_OK=false
+        FAILURE_TYPE="FINAL_VALIDATION_RETRY"
+        FAILURE_SIGNATURE="$FINAL_SIGNATURE"
+        ATTEMPT=1
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+          : > "$RESULT_DIR/obora.log"
+          if (cd "$REPO_DIR" && "$OBORA_BIN" run "$WORKFLOW" --config "$CONFIG" --output-dir "$RESULT_DIR" --timeout ${OBORA_RUN_TIMEOUT_MS:-240000}) 2>&1 | tee "$RESULT_DIR/obora.log"; then
+            RUN_OK=true
+            break
+          fi
+          FAILED_STEP=$(python3 - <<'PY' "$RESULT_DIR/obora.log"
+from pathlib import Path
+import re, sys
+text = Path(sys.argv[1]).read_text(errors='ignore')
+steps = re.findall(r'→\s*([^\x1b\[]+)', text)
+print(steps[-1].strip() if steps else '')
+PY
+)
+          if grep -q '\[SDK_8002\] Execution cancelled' "$RESULT_DIR/obora.log"; then
+            FAILURE_TYPE="SDK_8002"
+            FAILURE_SIGNATURE="sdk-8002-execution-cancelled"
+            if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+              echo "⚠️ SDK_8002 execution cancelled during post-validation retry, retrying..."
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+              sleep 5
+              ATTEMPT=$((ATTEMPT + 1))
+              continue
+            fi
+          fi
+          break
+        done
+        if [ "$RUN_OK" = true ]; then
+          if [ -f "$ARTIFACTS_DIR/edit.json" ]; then
+            cp "$ARTIFACTS_DIR/edit.json" "$RESULT_DIR/edit.json"
+          fi
+          python3 "$HELPER" validate-edit "$ARTIFACTS_DIR" "$REPO_DIR" "$FINAL_TARGET_FILE" > "$RESULT_DIR/final-validation.json"
+          if jq -e '.passed == true' "$RESULT_DIR/final-validation.json" >/dev/null 2>&1; then
+            cp "$ARTIFACTS_DIR/patch.diff" "$RESULT_DIR/patch.diff"
+            echo "✅ PASS"
+            echo "PASS" > "$RESULT_DIR/status.txt"
+            PASS=$((PASS + 1))
+          else
+            echo "❌ FAIL: Final validation failed"
+            echo "FAIL_PATCH" > "$RESULT_DIR/status.txt"
+            FAIL=$((FAIL + 1))
+          fi
+        else
+          echo "❌ FAIL: CLI repair loop execution failed"
+          echo "FAIL_RUNTIME" > "$RESULT_DIR/status.txt"
+          FAIL=$((FAIL + 1))
+        fi
+      else
+        echo "❌ FAIL: Final validation failed"
+        echo "FAIL_PATCH" > "$RESULT_DIR/status.txt"
+        FAIL=$((FAIL + 1))
+      fi
     fi
   else
     echo "❌ FAIL: CLI repair loop execution failed"
