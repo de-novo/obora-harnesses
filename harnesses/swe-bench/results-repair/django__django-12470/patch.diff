@@ -1,0 +1,13 @@
+diff --git aa/django/db/models/sql/compiler.py bb/django/db/models/sql/compiler.py
+index 92213a4e..3b940db5 100644
+--- aa/django/db/models/sql/compiler.py
++++ bb/django/db/models/sql/compiler.py
+@@ -727,7 +727,7 @@ class SQLCompiler:
+                     results.append((item, False))
+                     continue
+                 results.extend(self.find_ordering_name(item, opts, alias,
+-                                                       order, already_seen))
++                                                       descending and 'DESC' or 'ASC', already_seen))
+             return results
+         targets, alias, _ = self.query.trim_joins(targets, joins, path)
+         return [(OrderBy(transform_function(t, alias), descending=descending), False) for t in targets]

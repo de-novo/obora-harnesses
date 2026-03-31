@@ -1,0 +1,7 @@
+total: 1
+pass: 1
+fail: 0
+runtime_fail: 0
+quality_fail: 0
+infra_fail: 0
+pass_rate: 100%

@@ -1,0 +1,16 @@
+diff --git aa/django/core/management/commands/sqlmigrate.py bb/django/core/management/commands/sqlmigrate.py
+index f0b66322..1a737d8c 100644
+--- aa/django/core/management/commands/sqlmigrate.py
++++ bb/django/core/management/commands/sqlmigrate.py
+@@ -55,8 +55,9 @@ class Command(BaseCommand):
+                 migration_name, app_label))
+         targets = [(app_label, migration.name)]
+ 
+-        # Show begin/end around output only for atomic migrations
+-        self.output_transaction = migration.atomic
++        # Show begin/end around output only for atomic migrations that
++        # support transactional DDL.
++        self.output_transaction = migration.atomic and connection.features.can_rollback_ddl
+ 
+         # Make a plan that represents just the requested migrations and show SQL
+         # for it

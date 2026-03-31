@@ -1,0 +1,105 @@
+{
+  "id": "c2b064eb-d819-4569-b3f7-73cd85f55998",
+  "workflowName": "swe-bench-obora-os",
+  "status": "completed",
+  "startedAt": "2026-03-30T13:43:07.657Z",
+  "stepOrder": [
+    "discover_target",
+    "repair_contract",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "completedSteps": [
+    "discover_target",
+    "repair_contract",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "stepRecords": {
+    "discover_target": {
+      "output": "I have successfully completed the `discover_target` step by:\n\n1. Reading the problem description in `artifacts/problem.txt`, which describes a crash in `django/db/backends/base/schema.py` at line 378 in the `_delete_composed_index()` method when deleting an `index_together` if there is a `unique_together` on the same fields.\n\n2. Inspecting the repository and locating `django/db/backends/base/schema.py`, where I found the exact method causing the issue.\n\n3. Identifying the `_delete_composed_index` method (around line 378) as the problematic code that raises a `ValueError` when it finds the wrong number of constraints (2 instead of 1) - this happens because both a unique index (from `unique_together`) and a regular index (from `index_together`) exist on the same columns.\n\nThe target file has been written to `artifacts/target_file.txt`.",
+      "raw": {
+        "id": "zai-glm-4.7-1774878248698",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I have successfully completed the `discover_target` step by:\n\n1. Reading the problem description in `artifacts/problem.txt`, which describes a crash in `django/db/backends/base/schema.py` at line 378 in the `_delete_composed_index()` method when deleting an `index_together` if there is a `unique_together` on the same fields.\n\n2. Inspecting the repository and locating `django/db/backends/base/schema.py`, where I found the exact method causing the issue.\n\n3. Identifying the `_delete_composed_index` method (around line 378) as the problematic code that raises a `ValueError` when it finds the wrong number of constraints (2 instead of 1) - this happens because both a unique index (from `unique_together`) and a regular index (from `index_together`) exist on the same columns.\n\nThe target file has been written to `artifacts/target_file.txt`."
+        },
+        "usage": {
+          "promptTokens": 740,
+          "completionTokens": 194,
+          "totalTokens": 24899
+        },
+        "finishReason": "stop"
+      }
+    },
+    "repair_contract": {
+      "output": "{\"target_file\":\"django/db/backends/base/schema.py\",\"suspected_bug_locus\":\"_delete_composed_index\",\"change_intent\":\"Fix _delete_composed_index to handle multiple constraints on same columns by filtering for the specific constraint type (unique vs index) being deleted\",\"success_criteria\":[\"Deleting index_together succeeds when unique_together exists on same columns\",\"Deleting unique_together succeeds when index_together exists on same columns\",\"Only the correct constraint is deleted based on constraint_kwargs\"],\"do_not_touch\":[\"Do not modify _constraint_names method signature\",\"Do not change alter_unique_together or alter_index_together methods except their calls to _delete_composed_index\",\"Do not modify sql_delete_index or sql_delete_unique constants\"]}",
+      "raw": {
+        "id": "zai-glm-4.7-1774878275629",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "{\"target_file\":\"django/db/backends/base/schema.py\",\"suspected_bug_locus\":\"_delete_composed_index\",\"change_intent\":\"Fix _delete_composed_index to handle multiple constraints on same columns by filtering for the specific constraint type (unique vs index) being deleted\",\"success_criteria\":[\"Deleting index_together succeeds when unique_together exists on same columns\",\"Deleting unique_together succeeds when index_together exists on same columns\",\"Only the correct constraint is deleted based on constraint_kwargs\"],\"do_not_touch\":[\"Do not modify _constraint_names method signature\",\"Do not change alter_unique_together or alter_index_together methods except their calls to _delete_composed_index\",\"Do not modify sql_delete_index or sql_delete_unique constants\"]}"
+        },
+        "usage": {
+          "promptTokens": 13,
+          "completionTokens": 146,
+          "totalTokens": 12876
+        },
+        "finishReason": "stop"
+      }
+    },
+    "generate_edit": {
+      "output": "I have read all the required files and written the edit to `artifacts/edit.json`. The fix addresses the issue by properly filtering constraints in `_delete_composed_index` to distinguish between unique constraints (from `unique_together`) and indexes (from `index_together` on the same fields. By passing the `unique` and `index` parameters explicitly to `_constraint_names`, the method will only return constraints matching the specific type being deleted, allowing individual deletion of `index_together` or `unique_together` even when both exist on the same columns.",
+      "raw": {
+        "id": "zai-glm-4.7-1774878397786",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I have read all the required files and written the edit to `artifacts/edit.json`. The fix addresses the issue by properly filtering constraints in `_delete_composed_index` to distinguish between unique constraints (from `unique_together`) and indexes (from `index_together` on the same fields. By passing the `unique` and `index` parameters explicitly to `_constraint_names`, the method will only return constraints matching the specific type being deleted, allowing individual deletion of `index_together` or `unique_together` even when both exist on the same columns."
+        },
+        "usage": {
+          "promptTokens": 11,
+          "completionTokens": 115,
+          "totalTokens": 16621
+        },
+        "finishReason": "stop"
+      }
+    },
+    "validate_edit": {
+      "output": {
+        "passed": true,
+        "summary": "All validation checks passed. The edit correctly addresses the migration crash when deleting index_together while unique_together exists on the same fields.",
+        "failedChecks": [],
+        "signature": "schema-validation-c384f"
+      },
+      "raw": {
+        "id": "zai-glm-4.7-1774878417969",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "{\"passed\":true,\"summary\":\"All validation checks passed. The edit correctly addresses the migration crash when deleting index_together while unique_together exists on the same fields.\",\"failedChecks\":[],\"signature\":\"schema-validation-c384f\"}"
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 48,
+          "totalTokens": 13566
+        },
+        "finishReason": "stop"
+      }
+    }
+  },
+  "outputs": {
+    "discover_target": "I have successfully completed the `discover_target` step by:\n\n1. Reading the problem description in `artifacts/problem.txt`, which describes a crash in `django/db/backends/base/schema.py` at line 378 in the `_delete_composed_index()` method when deleting an `index_together` if there is a `unique_together` on the same fields.\n\n2. Inspecting the repository and locating `django/db/backends/base/schema.py`, where I found the exact method causing the issue.\n\n3. Identifying the `_delete_composed_index` method (around line 378) as the problematic code that raises a `ValueError` when it finds the wrong number of constraints (2 instead of 1) - this happens because both a unique index (from `unique_together`) and a regular index (from `index_together`) exist on the same columns.\n\nThe target file has been written to `artifacts/target_file.txt`.",
+    "repair_contract": "{\"target_file\":\"django/db/backends/base/schema.py\",\"suspected_bug_locus\":\"_delete_composed_index\",\"change_intent\":\"Fix _delete_composed_index to handle multiple constraints on same columns by filtering for the specific constraint type (unique vs index) being deleted\",\"success_criteria\":[\"Deleting index_together succeeds when unique_together exists on same columns\",\"Deleting unique_together succeeds when index_together exists on same columns\",\"Only the correct constraint is deleted based on constraint_kwargs\"],\"do_not_touch\":[\"Do not modify _constraint_names method signature\",\"Do not change alter_unique_together or alter_index_together methods except their calls to _delete_composed_index\",\"Do not modify sql_delete_index or sql_delete_unique constants\"]}",
+    "generate_edit": "I have read all the required files and written the edit to `artifacts/edit.json`. The fix addresses the issue by properly filtering constraints in `_delete_composed_index` to distinguish between unique constraints (from `unique_together`) and indexes (from `index_together` on the same fields. By passing the `unique` and `index` parameters explicitly to `_constraint_names`, the method will only return constraints matching the specific type being deleted, allowing individual deletion of `index_together` or `unique_together` even when both exist on the same columns.",
+    "validate_edit": {
+      "passed": true,
+      "summary": "All validation checks passed. The edit correctly addresses the migration crash when deleting index_together while unique_together exists on the same fields.",
+      "failedChecks": [],
+      "signature": "schema-validation-c384f"
+    }
+  },
+  "endedAt": "2026-03-30T13:47:07.184Z"
+}

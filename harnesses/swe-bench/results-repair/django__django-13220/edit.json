@@ -1,0 +1,1 @@
+{"target_file":"django/core/exceptions.py","old_string":"    def __repr__(self):\n        return 'ValidationError(%s)' % self","new_string":"    def __repr__(self):\n        return 'ValidationError(%s)' % self\n\n    def __eq__(self, other):\n        if isinstance(other, ValidationError):\n            return dict(self) == dict(other)\n        return NotImplemented"}

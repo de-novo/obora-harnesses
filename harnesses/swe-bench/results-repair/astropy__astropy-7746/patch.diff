@@ -1,0 +1,16 @@
+diff --git aa/astropy/wcs/wcs.py bb/astropy/wcs/wcs.py
+index d3a06f2b..079174c9 100644
+--- aa/astropy/wcs/wcs.py
++++ bb/astropy/wcs/wcs.py
+@@ -1220,6 +1220,11 @@ reduce these to 2 dimensions using the naxis kwarg.
+ 
+             xy = np.hstack([x.reshape((x.size, 1)) for x in axes])
+ 
++            if xy.size == 0:
++                if ra_dec_order and sky == 'output':
++                    return tuple(x.copy() for x in axes)
++                return tuple(x.copy() for x in axes)
++
+             if ra_dec_order and sky == 'input':
+                 xy = self._denormalize_sky(xy)
+             output = func(xy, origin)

@@ -1,0 +1,13 @@
+diff --git aa/django/db/models/fields/__init__.py bb/django/db/models/fields/__init__.py
+index f32ce646..71005490 100644
+--- aa/django/db/models/fields/__init__.py
++++ bb/django/db/models/fields/__init__.py
+@@ -1587,7 +1587,7 @@ class DurationField(Field):
+     empty_strings_allowed = False
+     default_error_messages = {
+         'invalid': _("'%(value)s' value has an invalid format. It must be in "
+-                     "[DD] [HH:[MM:]]ss[.uuuuuu] format.")
++                     "[DD] [[HH:]MM:]ss[.uuuuuu] format.")
+     }
+     description = _("Duration")
+ 

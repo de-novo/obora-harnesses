@@ -1,0 +1,7 @@
+{
+  "id": "pytest-dev__pytest-5221",
+  "problem_statement": "Display fixture scope with `pytest --fixtures`\nIt would be useful to show fixture scopes with `pytest --fixtures`; currently the only way to learn the scope of a fixture is look at the docs (when that is documented) or at the source code.\n",
+  "repo": "pytest-dev/pytest",
+  "base_commit": "4a2fdce62b73944030cff9b3e52862868ca9584d",
+  "version": "4.4"
+}

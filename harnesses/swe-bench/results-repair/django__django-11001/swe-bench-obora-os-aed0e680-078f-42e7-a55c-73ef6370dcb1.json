@@ -1,0 +1,105 @@
+{
+  "id": "aed0e680-078f-42e7-a55c-73ef6370dcb1",
+  "workflowName": "swe-bench-obora-os",
+  "status": "completed",
+  "startedAt": "2026-03-30T01:04:40.142Z",
+  "stepOrder": [
+    "discover_target",
+    "repair_contract",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "completedSteps": [
+    "discover_target",
+    "repair_contract",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "stepRecords": {
+    "discover_target": {
+      "output": "I",
+      "raw": {
+        "id": "zai-glm-4.7-1774832865399",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I"
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 2,
+          "totalTokens": 37887
+        },
+        "finishReason": "stop"
+      }
+    },
+    "repair_contract": {
+      "output": "I've created the repair contract at `artifacts/repair_contract.json`. The contract identifies:\n\n- **target_file**: `django/db/models/sql/compiler.py`\n- **suspected_bug_locus**: `SQLCompiler.get_order_by` method\n- **change_intent**: Fix duplicate detection by normalizing whitespace in multiline SQL before applying the regex pattern\n- **success_criteria**: Three testable outcomes ensuring multiline RawSQL expressions are correctly preserved and duplicates are identified by full content\n- **do_not_touch**: Three constraints to limit scope - other methods, the regex pattern, and is_ref handling\n\nThe fix should handle the reported issue where multiline RawSQL expressions with identical last lines are incorrectly treated as duplicates.",
+      "raw": {
+        "id": "zai-glm-4.7-1774832879525",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I've created the repair contract at `artifacts/repair_contract.json`. The contract identifies:\n\n- **target_file**: `django/db/models/sql/compiler.py`\n- **suspected_bug_locus**: `SQLCompiler.get_order_by` method\n- **change_intent**: Fix duplicate detection by normalizing whitespace in multiline SQL before applying the regex pattern\n- **success_criteria**: Three testable outcomes ensuring multiline RawSQL expressions are correctly preserved and duplicates are identified by full content\n- **do_not_touch**: Three constraints to limit scope - other methods, the regex pattern, and is_ref handling\n\nThe fix should handle the reported issue where multiline RawSQL expressions with identical last lines are incorrectly treated as duplicates."
+        },
+        "usage": {
+          "promptTokens": 13,
+          "completionTokens": 142,
+          "totalTokens": 15078
+        },
+        "finishReason": "stop"
+      }
+    },
+    "generate_edit": {
+      "output": "I've read the required files and generated the edit. The fix normalizes whitespace in multiline SQL before applying the regex pattern by converting it to a single line using `' '.join(sql.split())`. This ensures that the duplicate detection in `SQLCompiler.get_order_by()` works correctly for multiline RawSQL expressions with identical last lines.",
+      "raw": {
+        "id": "zai-glm-4.7-1774832898360",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I've read the required files and generated the edit. The fix normalizes whitespace in multiline SQL before applying the regex pattern by converting it to a single line using `' '.join(sql.split())`. This ensures that the duplicate detection in `SQLCompiler.get_order_by()` works correctly for multiline RawSQL expressions with identical last lines."
+        },
+        "usage": {
+          "promptTokens": 11,
+          "completionTokens": 66,
+          "totalTokens": 15500
+        },
+        "finishReason": "stop"
+      }
+    },
+    "validate_edit": {
+      "output": {
+        "passed": true,
+        "summary": "All validation checks passed. The edit correctly targets the bug locus in SQLCompiler.get_order_by(), applies a minimal whitespace normalization fix using ' '.join(sql.split()), and aligns with the repair_contract constraints.",
+        "failedChecks": [],
+        "signature": "compiler-normalize-whitespace-fix"
+      },
+      "raw": {
+        "id": "zai-glm-4.7-1774832917111",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"passed\": true,\n  \"summary\": \"All validation checks passed. The edit correctly targets the bug locus in SQLCompiler.get_order_by(), applies a minimal whitespace normalization fix using ' '.join(sql.split()), and aligns with the repair_contract constraints.\",\n  \"failedChecks\": [],\n  \"signature\": \"compiler-normalize-whitespace-fix\"\n}"
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 73,
+          "totalTokens": 15744
+        },
+        "finishReason": "stop"
+      }
+    }
+  },
+  "outputs": {
+    "discover_target": "I",
+    "repair_contract": "I've created the repair contract at `artifacts/repair_contract.json`. The contract identifies:\n\n- **target_file**: `django/db/models/sql/compiler.py`\n- **suspected_bug_locus**: `SQLCompiler.get_order_by` method\n- **change_intent**: Fix duplicate detection by normalizing whitespace in multiline SQL before applying the regex pattern\n- **success_criteria**: Three testable outcomes ensuring multiline RawSQL expressions are correctly preserved and duplicates are identified by full content\n- **do_not_touch**: Three constraints to limit scope - other methods, the regex pattern, and is_ref handling\n\nThe fix should handle the reported issue where multiline RawSQL expressions with identical last lines are incorrectly treated as duplicates.",
+    "generate_edit": "I've read the required files and generated the edit. The fix normalizes whitespace in multiline SQL before applying the regex pattern by converting it to a single line using `' '.join(sql.split())`. This ensures that the duplicate detection in `SQLCompiler.get_order_by()` works correctly for multiline RawSQL expressions with identical last lines.",
+    "validate_edit": {
+      "passed": true,
+      "summary": "All validation checks passed. The edit correctly targets the bug locus in SQLCompiler.get_order_by(), applies a minimal whitespace normalization fix using ' '.join(sql.split()), and aligns with the repair_contract constraints.",
+      "failedChecks": [],
+      "signature": "compiler-normalize-whitespace-fix"
+    }
+  },
+  "endedAt": "2026-03-30T01:08:39.884Z"
+}

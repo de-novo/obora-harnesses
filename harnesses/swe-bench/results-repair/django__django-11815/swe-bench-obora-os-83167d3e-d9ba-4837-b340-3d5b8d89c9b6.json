@@ -1,0 +1,85 @@
+{
+  "id": "83167d3e-d9ba-4837-b340-3d5b8d89c9b6",
+  "workflowName": "swe-bench-obora-os",
+  "status": "completed",
+  "startedAt": "2026-03-29T18:43:16.766Z",
+  "stepOrder": [
+    "discover_target",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "completedSteps": [
+    "discover_target",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "stepRecords": {
+    "discover_target": {
+      "output": "I've identified the target source file for the issue:\n\n**django/db/migrations/serializer.py**\n\nThe `EnumSerializer` class in this file is responsible for serializing Enum objects into migration files. Currently, it uses `self.value.value` (the enum's value) which produces `Status('Good')` in migrations. The issue states it should use the enum's name instead, producing `Status['GOOD']`, which would be language-agnostic and more stable for migrations.",
+      "raw": {
+        "id": "zai-glm-4.7-1774809806263",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I've identified the target source file for the issue:\n\n**django/db/migrations/serializer.py**\n\nThe `EnumSerializer` class in this file is responsible for serializing Enum objects into migration files. Currently, it uses `self.value.value` (the enum's value) which produces `Status('Good')` in migrations. The issue states it should use the enum's name instead, producing `Status['GOOD']`, which would be language-agnostic and more stable for migrations."
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 98,
+          "totalTokens": 4319
+        },
+        "finishReason": "stop"
+      }
+    },
+    "generate_edit": {
+      "output": "{\n  \"target_file\": \"django/db/migrations/serializer.py\",\n  \"old_string\": \"class EnumSerializer(BaseSerializer):\\n    def serialize(self):\\n        enum_class = self.value.__class__\\n        module = enum_class.__module__\\n        v_string, v_imports = serializer_factory(self.value.value).serialize()\\n        imports = {'import %s' % module, *v_imports}\\n        return \\\"%s.%s(%s)\\\" % (module, enum_class.__name__, v_string), imports\",\n  \"new_string\": \"class EnumSerializer(BaseSerializer):\\n    def serialize(self):\\n        enum_class = self.value.__class__\\n        module = enum_class.__module__\\n        return \\\"%s.%s[%r]\\\" % (module, enum_class.__name__, self.value.name), {'import %s' % module}\"\n}",
+      "raw": {
+        "id": "zai-glm-4.7-1774809813231",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "{\n  \"target_file\": \"django/db/migrations/serializer.py\",\n  \"old_string\": \"class EnumSerializer(BaseSerializer):\\n    def serialize(self):\\n        enum_class = self.value.__class__\\n        module = enum_class.__module__\\n        v_string, v_imports = serializer_factory(self.value.value).serialize()\\n        imports = {'import %s' % module, *v_imports}\\n        return \\\"%s.%s(%s)\\\" % (module, enum_class.__name__, v_string), imports\",\n  \"new_string\": \"class EnumSerializer(BaseSerializer):\\n    def serialize(self):\\n        enum_class = self.value.__class__\\n        module = enum_class.__module__\\n        return \\\"%s.%s[%r]\\\" % (module, enum_class.__name__, self.value.name), {'import %s' % module}\"\n}"
+        },
+        "usage": {
+          "promptTokens": 11,
+          "completionTokens": 186,
+          "totalTokens": 4213
+        },
+        "finishReason": "stop"
+      }
+    },
+    "validate_edit": {
+      "output": {
+        "passed": true,
+        "summary": "All validation checks passed. The edit correctly targets the EnumSerializer class in django/db/migrations/serializer.py and changes the serialization logic from using the enum value (which may be translated) to using the enum name (which is stable), directly addressing the reported issue.",
+        "failedChecks": [],
+        "signature": "enum-serializer-name-validation"
+      },
+      "raw": {
+        "id": "zai-glm-4.7-1774809822651",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "{\"passed\":true,\"summary\":\"All validation checks passed. The edit correctly targets the EnumSerializer class in django/db/migrations/serializer.py and changes the serialization logic from using the enum value (which may be translated) to using the enum name (which is stable), directly addressing the reported issue.\",\"failedChecks\":[],\"signature\":\"enum-serializer-name-validation\"}"
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 73,
+          "totalTokens": 4589
+        },
+        "finishReason": "stop"
+      }
+    }
+  },
+  "outputs": {
+    "discover_target": "I've identified the target source file for the issue:\n\n**django/db/migrations/serializer.py**\n\nThe `EnumSerializer` class in this file is responsible for serializing Enum objects into migration files. Currently, it uses `self.value.value` (the enum's value) which produces `Status('Good')` in migrations. The issue states it should use the enum's name instead, producing `Status['GOOD']`, which would be language-agnostic and more stable for migrations.",
+    "generate_edit": "{\n  \"target_file\": \"django/db/migrations/serializer.py\",\n  \"old_string\": \"class EnumSerializer(BaseSerializer):\\n    def serialize(self):\\n        enum_class = self.value.__class__\\n        module = enum_class.__module__\\n        v_string, v_imports = serializer_factory(self.value.value).serialize()\\n        imports = {'import %s' % module, *v_imports}\\n        return \\\"%s.%s(%s)\\\" % (module, enum_class.__name__, v_string), imports\",\n  \"new_string\": \"class EnumSerializer(BaseSerializer):\\n    def serialize(self):\\n        enum_class = self.value.__class__\\n        module = enum_class.__module__\\n        return \\\"%s.%s[%r]\\\" % (module, enum_class.__name__, self.value.name), {'import %s' % module}\"\n}",
+    "validate_edit": {
+      "passed": true,
+      "summary": "All validation checks passed. The edit correctly targets the EnumSerializer class in django/db/migrations/serializer.py and changes the serialization logic from using the enum value (which may be translated) to using the enum name (which is stable), directly addressing the reported issue.",
+      "failedChecks": [],
+      "signature": "enum-serializer-name-validation"
+    }
+  },
+  "endedAt": "2026-03-29T18:43:44.210Z"
+}

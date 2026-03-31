@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build artifacts
+artifacts/
+.qa-home/
+*.log
+run.out
+run.err
+
+# Test artifacts
+test_*.py
+todo.py
+todo_scaffold.py
+verify_*.py
+check_implementation.py
+
+# OS files
+.DS_Store

@@ -1,0 +1,105 @@
+{
+  "id": "46dacfaf-ad59-47a0-93e0-71a60d0e2b1f",
+  "workflowName": "swe-bench-obora-os",
+  "status": "completed",
+  "startedAt": "2026-03-30T00:47:30.232Z",
+  "stepOrder": [
+    "discover_target",
+    "repair_contract",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "completedSteps": [
+    "discover_target",
+    "repair_contract",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "stepRecords": {
+    "discover_target": {
+      "output": "The target file has been successfully identified and written to `artifacts/target_file.txt`.",
+      "raw": {
+        "id": "zai-glm-4.7-1774831663323",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "The target file has been successfully identified and written to `artifacts/target_file.txt`."
+        },
+        "usage": {
+          "promptTokens": 14,
+          "completionTokens": 18,
+          "totalTokens": 6943
+        },
+        "finishReason": "stop"
+      }
+    },
+    "repair_contract": {
+      "output": "Wrote repair contract to `artifacts/repair_contract.json`. The contract identifies:\n- Target file: `astropy/io/ascii/qdp.py`\n- Bug locus: `_line_type` function's `_command_re` regex pattern\n- Change intent: Make command regex case-insensitive\n- Success criteria: lowercase commands parse correctly, existing tests pass\n- Do not touch: other regex patterns, function structure, unrelated validation logic",
+      "raw": {
+        "id": "zai-glm-4.7-1774831674373",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "Wrote repair contract to `artifacts/repair_contract.json`. The contract identifies:\n- Target file: `astropy/io/ascii/qdp.py`\n- Bug locus: `_line_type` function's `_command_re` regex pattern\n- Change intent: Make command regex case-insensitive\n- Success criteria: lowercase commands parse correctly, existing tests pass\n- Do not touch: other regex patterns, function structure, unrelated validation logic"
+        },
+        "usage": {
+          "promptTokens": 13,
+          "completionTokens": 88,
+          "totalTokens": 6581
+        },
+        "finishReason": "stop"
+      }
+    },
+    "generate_edit": {
+      "output": "{\"target_file\":\"astropy/io/ascii/qdp.py\",\"old_string\":\"    _command_re = r\\\"READ [TS]ERR(\\\\s+[0-9]+)+\\\"\",\"new_string\":\"    _command_re = r\\\"(?i)READ [TS]ERR(\\\\s+[0-9]+)+\\\"\"}",
+      "raw": {
+        "id": "zai-glm-4.7-1774831684206",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "{\"target_file\":\"astropy/io/ascii/qdp.py\",\"old_string\":\"    _command_re = r\\\"READ [TS]ERR(\\\\s+[0-9]+)+\\\"\",\"new_string\":\"    _command_re = r\\\"(?i)READ [TS]ERR(\\\\s+[0-9]+)+\\\"\"}"
+        },
+        "usage": {
+          "promptTokens": 74,
+          "completionTokens": 69,
+          "totalTokens": 6881
+        },
+        "finishReason": "stop"
+      }
+    },
+    "validate_edit": {
+      "output": {
+        "passed": true,
+        "summary": "All validation checks passed. The edit correctly targets astropy/io/ascii/qdp.py, the old_string exists exactly in the file at line 48, and the change adds (?i) to make the QDP command regex case-insensitive, which directly addresses the issue of lowercase 'read serr' commands failing. The edit aligns with the repair contract's intent to modify the _command_re regex pattern.",
+        "failedChecks": [],
+        "signature": "qdp-case-insensitive-regex-v1"
+      },
+      "raw": {
+        "id": "zai-glm-4.7-1774831698131",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "{\"passed\":true,\"summary\":\"All validation checks passed. The edit correctly targets astropy/io/ascii/qdp.py, the old_string exists exactly in the file at line 48, and the change adds (?i) to make the QDP command regex case-insensitive, which directly addresses the issue of lowercase 'read serr' commands failing. The edit aligns with the repair contract's intent to modify the _command_re regex pattern.\",\"failedChecks\":[],\"signature\":\"qdp-case-insensitive-regex-v1\"}"
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 106,
+          "totalTokens": 7242
+        },
+        "finishReason": "stop"
+      }
+    }
+  },
+  "outputs": {
+    "discover_target": "The target file has been successfully identified and written to `artifacts/target_file.txt`.",
+    "repair_contract": "Wrote repair contract to `artifacts/repair_contract.json`. The contract identifies:\n- Target file: `astropy/io/ascii/qdp.py`\n- Bug locus: `_line_type` function's `_command_re` regex pattern\n- Change intent: Make command regex case-insensitive\n- Success criteria: lowercase commands parse correctly, existing tests pass\n- Do not touch: other regex patterns, function structure, unrelated validation logic",
+    "generate_edit": "{\"target_file\":\"astropy/io/ascii/qdp.py\",\"old_string\":\"    _command_re = r\\\"READ [TS]ERR(\\\\s+[0-9]+)+\\\"\",\"new_string\":\"    _command_re = r\\\"(?i)READ [TS]ERR(\\\\s+[0-9]+)+\\\"\"}",
+    "validate_edit": {
+      "passed": true,
+      "summary": "All validation checks passed. The edit correctly targets astropy/io/ascii/qdp.py, the old_string exists exactly in the file at line 48, and the change adds (?i) to make the QDP command regex case-insensitive, which directly addresses the issue of lowercase 'read serr' commands failing. The edit aligns with the repair contract's intent to modify the _command_re regex pattern.",
+      "failedChecks": [],
+      "signature": "qdp-case-insensitive-regex-v1"
+    }
+  },
+  "endedAt": "2026-03-30T00:48:20.653Z"
+}

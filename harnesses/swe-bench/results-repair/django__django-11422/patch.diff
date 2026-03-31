@@ -1,0 +1,16 @@
+diff --git aa/django/utils/autoreload.py bb/django/utils/autoreload.py
+index 7ca0d68f..355fe723 100644
+--- aa/django/utils/autoreload.py
++++ bb/django/utils/autoreload.py
+@@ -221,6 +221,11 @@ class BaseReloader:
+         self.extra_files = set()
+         self.directory_globs = defaultdict(set)
+         self._stop_condition = threading.Event()
++        # Add the main script (e.g., manage.py) to the list of files to watch.
++        # This is needed because the main script is not a module in sys.modules.
++        main_script = Path(sys.argv[0]).absolute()
++        if main_script.exists():
++            self.extra_files.add(main_script)
+ 
+     def watch_dir(self, path, glob):
+         path = Path(path)

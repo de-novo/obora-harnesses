@@ -1,0 +1,48 @@
+name: todo-cli-minimal
+version: "1.0"
+description: "Minimal single-step Todo CLI generation"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: CLI generator
+    temperature: 0.1
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rw"
+    - path: ./src
+      mode: "rw"
+
+steps:
+  - name: generate_cli
+    agent: generator
+    input:
+      task: |
+        Create a minimal Todo CLI with only three commands: help, add, list.
+
+        Requirements:
+        - Node.js CLI with package.json and src/index.js
+        - Local JSON persistence in ~/.todo-cli-minimal/todos.json
+        - Atomic writes (temp file + rename)
+        - Clear error messages
+
+        Write all files directly. Do not describe what you will do. Just write the code.
+
+        Commands:
+        - help: Show usage
+        - add <text>: Add a new todo
+        - list: Show all todos
+
+        Storage format:
+        {
+          "todos": [
+            {"id": 1, "text": "...", "done": false}
+          ],
+          "nextId": 2
+        }
+
+        Exit 0 on success. Exit 1 on error.

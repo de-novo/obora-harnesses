@@ -1,0 +1,85 @@
+{
+  "id": "f60ea2ea-d321-428c-b8a9-cff3f52935df",
+  "workflowName": "swe-bench-obora-os",
+  "status": "completed",
+  "startedAt": "2026-03-29T18:44:02.130Z",
+  "stepOrder": [
+    "discover_target",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "completedSteps": [
+    "discover_target",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "stepRecords": {
+    "discover_target": {
+      "output": "I've identified the target source file. The issue is about the `parse_http_date` function in `django.utils.http`, which has an incorrect two-digit year check. Looking at the code in `django/utils/http.py`, I can see the problematic logic around lines 168-171:\n\n```python\nyear = int(m.group('year'))\nif year < 100:\n    if year < 70:\n        year += 2000\n    else:\n        year += 1900\n```\n\nThis hardcoded logic (0-69 → 2000-2069, 70-99 → 1970-1999) doesn't follow RFC 7231's requirement to interpret timestamps more than 50 years in the future as representing the most recent year in the past with the same last two digits.\n\nThe target file is: `django/utils/http.py`",
+      "raw": {
+        "id": "zai-glm-4.7-1774809858908",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I've identified the target source file. The issue is about the `parse_http_date` function in `django.utils.http`, which has an incorrect two-digit year check. Looking at the code in `django/utils/http.py`, I can see the problematic logic around lines 168-171:\n\n```python\nyear = int(m.group('year'))\nif year < 100:\n    if year < 70:\n        year += 2000\n    else:\n        year += 1900\n```\n\nThis hardcoded logic (0-69 → 2000-2069, 70-99 → 1970-1999) doesn't follow RFC 7231's requirement to interpret timestamps more than 50 years in the future as representing the most recent year in the past with the same last two digits.\n\nThe target file is: `django/utils/http.py`"
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 178,
+          "totalTokens": 5526
+        },
+        "finishReason": "stop"
+      }
+    },
+    "generate_edit": {
+      "output": "I've read the required files and created the edit to fix the two-digit year interpretation issue in `parse_http_date`. The edit changes the hardcoded logic (0-69 → 2000-2069, 70-99 → 1970-1999) to a dynamic implementation that follows RFC 7231's requirement to interpret timestamps more than 50 years in the future as representing the most recent year in the past with the same last two digits. The fix uses the current year to determine the appropriate century for two-digit years.",
+      "raw": {
+        "id": "zai-glm-4.7-1774809866351",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I've read the required files and created the edit to fix the two-digit year interpretation issue in `parse_http_date`. The edit changes the hardcoded logic (0-69 → 2000-2069, 70-99 → 1970-1999) to a dynamic implementation that follows RFC 7231's requirement to interpret timestamps more than 50 years in the future as representing the most recent year in the past with the same last two digits. The fix uses the current year to determine the appropriate century for two-digit years."
+        },
+        "usage": {
+          "promptTokens": 24,
+          "completionTokens": 112,
+          "totalTokens": 5587
+        },
+        "finishReason": "stop"
+      }
+    },
+    "validate_edit": {
+      "output": {
+        "passed": true,
+        "summary": "All validation checks passed. The edit correctly addresses the two-digit year interpretation issue in django.utils.http.parse_http_date by replacing the hardcoded century logic with a dynamic RFC 7231 compliant implementation.",
+        "failedChecks": [],
+        "signature": "rfc7231-year-fix-valid"
+      },
+      "raw": {
+        "id": "zai-glm-4.7-1774809875184",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "{\"passed\":true,\"summary\":\"All validation checks passed. The edit correctly addresses the two-digit year interpretation issue in django.utils.http.parse_http_date by replacing the hardcoded century logic with a dynamic RFC 7231 compliant implementation.\",\"failedChecks\":[],\"signature\":\"rfc7231-year-fix-valid\"}"
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 62,
+          "totalTokens": 5785
+        },
+        "finishReason": "stop"
+      }
+    }
+  },
+  "outputs": {
+    "discover_target": "I've identified the target source file. The issue is about the `parse_http_date` function in `django.utils.http`, which has an incorrect two-digit year check. Looking at the code in `django/utils/http.py`, I can see the problematic logic around lines 168-171:\n\n```python\nyear = int(m.group('year'))\nif year < 100:\n    if year < 70:\n        year += 2000\n    else:\n        year += 1900\n```\n\nThis hardcoded logic (0-69 → 2000-2069, 70-99 → 1970-1999) doesn't follow RFC 7231's requirement to interpret timestamps more than 50 years in the future as representing the most recent year in the past with the same last two digits.\n\nThe target file is: `django/utils/http.py`",
+    "generate_edit": "I've read the required files and created the edit to fix the two-digit year interpretation issue in `parse_http_date`. The edit changes the hardcoded logic (0-69 → 2000-2069, 70-99 → 1970-1999) to a dynamic implementation that follows RFC 7231's requirement to interpret timestamps more than 50 years in the future as representing the most recent year in the past with the same last two digits. The fix uses the current year to determine the appropriate century for two-digit years.",
+    "validate_edit": {
+      "passed": true,
+      "summary": "All validation checks passed. The edit correctly addresses the two-digit year interpretation issue in django.utils.http.parse_http_date by replacing the hardcoded century logic with a dynamic RFC 7231 compliant implementation.",
+      "failedChecks": [],
+      "signature": "rfc7231-year-fix-valid"
+    }
+  },
+  "endedAt": "2026-03-29T18:44:36.728Z"
+}

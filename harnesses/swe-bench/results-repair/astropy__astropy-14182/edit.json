@@ -1,0 +1,1 @@
+{"target_file":"astropy/io/ascii/rst.py","old_string":"    def __init__(self):\n        super().__init__(delimiter_pad=None, bookend=False)","new_string":"    def __init__(self, **kwargs):\n        super().__init__(delimiter_pad=None, bookend=False, **kwargs)"}

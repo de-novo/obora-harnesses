@@ -1,0 +1,16 @@
+diff --git aa/django/core/exceptions.py bb/django/core/exceptions.py
+index dc084b86..accda490 100644
+--- aa/django/core/exceptions.py
++++ bb/django/core/exceptions.py
+@@ -182,6 +182,11 @@ class ValidationError(Exception):
+     def __repr__(self):
+         return 'ValidationError(%s)' % self
+ 
++    def __eq__(self, other):
++        if isinstance(other, ValidationError):
++            return dict(self) == dict(other)
++        return NotImplemented
++
+ 
+ class EmptyResultSet(Exception):
+     """A database query predicate is impossible."""

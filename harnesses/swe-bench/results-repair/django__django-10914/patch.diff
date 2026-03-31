@@ -1,0 +1,14 @@
+diff --git aa/django/core/files/storage.py bb/django/core/files/storage.py
+index cbdab1de..7e4892a3 100644
+--- aa/django/core/files/storage.py
++++ bb/django/core/files/storage.py
+@@ -253,6 +253,9 @@ class FileSystemStorage(Storage):
+                 # This file has a file path that we can move.
+                 if hasattr(content, 'temporary_file_path'):
+                     file_move_safe(content.temporary_file_path(), full_path)
++                    # Ensure consistent permissions for files moved from temp location.
++                    if self.file_permissions_mode is not None:
++                        os.chmod(full_path, self.file_permissions_mode)
+ 
+                 # This is a normal uploadedfile that we can stream.
+                 else:

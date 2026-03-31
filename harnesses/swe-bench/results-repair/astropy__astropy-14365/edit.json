@@ -1,0 +1,1 @@
+{"target_file":"astropy/io/ascii/qdp.py","old_string":"    _command_re = r\"READ [TS]ERR(\\s+[0-9]+)+\"","new_string":"    _command_re = r\"(?i)READ [TS]ERR(\\s+[0-9]+)+\""}

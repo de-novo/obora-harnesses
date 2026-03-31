@@ -1,0 +1,105 @@
+{
+  "id": "58422ae1-2309-45bc-9a65-5fd64bd0c1e4",
+  "workflowName": "swe-bench-obora-os",
+  "status": "completed",
+  "startedAt": "2026-03-30T14:51:29.359Z",
+  "stepOrder": [
+    "discover_target",
+    "repair_contract",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "completedSteps": [
+    "discover_target",
+    "repair_contract",
+    "generate_edit",
+    "validate_edit"
+  ],
+  "stepRecords": {
+    "discover_target": {
+      "output": "I have identified the target file for this issue.\n\nThe problem is in `django/db/models/sql/query.py`. The `check_filterable` method incorrectly checks user-defined model attributes named `filterable` instead of only checking Django's internal `filterable` attribute on expressions. When filtering with a model instance that has a field named `filterable`, the method mistakenly checks the field's value instead of defaulting to `True`.\n\nThe fix should ensure that `check_filterable` only checks for Django's internal `filterable` attribute on expression objects and doesn't accidentally check user-defined fields on model instances used as filter values.",
+      "raw": {
+        "id": "zai-glm-4.7-1774882325995",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I have identified the target file for this issue.\n\nThe problem is in `django/db/models/sql/query.py`. The `check_filterable` method incorrectly checks user-defined model attributes named `filterable` instead of only checking Django's internal `filterable` attribute on expressions. When filtering with a model instance that has a field named `filterable`, the method mistakenly checks the field's value instead of defaulting to `True`.\n\nThe fix should ensure that `check_filterable` only checks for Django's internal `filterable` attribute on expression objects and doesn't accidentally check user-defined fields on model instances used as filter values."
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 127,
+          "totalTokens": 46429
+        },
+        "finishReason": "stop"
+      }
+    },
+    "repair_contract": {
+      "output": "I have created the repair contract JSON file at `artifacts/repair_contract.json`. The contract identifies the `check_filterable` method as the bug locus and specifies that the fix should prevent the method from incorrectly checking user-defined model fields named `filterable` while still properly validating Django's internal `filterable` attribute on expression objects.",
+      "raw": {
+        "id": "zai-glm-4.7-1774882342450",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "I have created the repair contract JSON file at `artifacts/repair_contract.json`. The contract identifies the `check_filterable` method as the bug locus and specifies that the fix should prevent the method from incorrectly checking user-defined model fields named `filterable` while still properly validating Django's internal `filterable` attribute on expression objects."
+        },
+        "usage": {
+          "promptTokens": 13,
+          "completionTokens": 69,
+          "totalTokens": 23863
+        },
+        "finishReason": "stop"
+      }
+    },
+    "generate_edit": {
+      "output": "The edit JSON has been written successfully. The fix:\n\n1. **Identifies the bug**: The `check_filterable` method was checking for a `filterable` attribute on any object passed to it, including model instances that happen to have a field named `filterable`.\n\n2. **Applies the fix**: The modified method now only checks the `filterable` attribute when the expression is an instance of `BaseExpression`. This prevents false positives when filtering with model instances that have user-defined fields named `filterable`.\n\n3. **Preserves existing behavior**: The recursive check for nested expressions via `get_source_expressions` is maintained, and the error message and `NotSupportedError` raising logic remain unchanged as required by the `do_not_touch` constraints.",
+      "raw": {
+        "id": "zai-glm-4.7-1774882376197",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "The edit JSON has been written successfully. The fix:\n\n1. **Identifies the bug**: The `check_filterable` method was checking for a `filterable` attribute on any object passed to it, including model instances that happen to have a field named `filterable`.\n\n2. **Applies the fix**: The modified method now only checks the `filterable` attribute when the expression is an instance of `BaseExpression`. This prevents false positives when filtering with model instances that have user-defined fields named `filterable`.\n\n3. **Preserves existing behavior**: The recursive check for nested expressions via `get_source_expressions` is maintained, and the error message and `NotSupportedError` raising logic remain unchanged as required by the `do_not_touch` constraints."
+        },
+        "usage": {
+          "promptTokens": 282,
+          "completionTokens": 156,
+          "totalTokens": 68885
+        },
+        "finishReason": "stop"
+      }
+    },
+    "validate_edit": {
+      "output": {
+        "passed": true,
+        "summary": "All validation checks passed. The edit correctly targets the check_filterable method in django/db/models/sql/query.py, adding an isinstance(expression, BaseExpression) check to prevent false positives when model instances have fields named 'filterable'. The old_string exists in the target file, the edit is specific to the issue, and all do_not_touch constraints are respected.",
+        "failedChecks": [],
+        "signature": "val-edt-a1b2c3"
+      },
+      "raw": {
+        "id": "zai-glm-4.7-1774882398411",
+        "model": "glm-4.7",
+        "message": {
+          "role": "assistant",
+          "content": "{\"passed\":true,\"summary\":\"All validation checks passed. The edit correctly targets the check_filterable method in django/db/models/sql/query.py, adding an isinstance(expression, BaseExpression) check to prevent false positives when model instances have fields named 'filterable'. The old_string exists in the target file, the edit is specific to the issue, and all do_not_touch constraints are respected.\",\"failedChecks\":[],\"signature\":\"val-edt-a1b2c3\"}"
+        },
+        "usage": {
+          "promptTokens": 12,
+          "completionTokens": 95,
+          "totalTokens": 24676
+        },
+        "finishReason": "stop"
+      }
+    }
+  },
+  "outputs": {
+    "discover_target": "I have identified the target file for this issue.\n\nThe problem is in `django/db/models/sql/query.py`. The `check_filterable` method incorrectly checks user-defined model attributes named `filterable` instead of only checking Django's internal `filterable` attribute on expressions. When filtering with a model instance that has a field named `filterable`, the method mistakenly checks the field's value instead of defaulting to `True`.\n\nThe fix should ensure that `check_filterable` only checks for Django's internal `filterable` attribute on expression objects and doesn't accidentally check user-defined fields on model instances used as filter values.",
+    "repair_contract": "I have created the repair contract JSON file at `artifacts/repair_contract.json`. The contract identifies the `check_filterable` method as the bug locus and specifies that the fix should prevent the method from incorrectly checking user-defined model fields named `filterable` while still properly validating Django's internal `filterable` attribute on expression objects.",
+    "generate_edit": "The edit JSON has been written successfully. The fix:\n\n1. **Identifies the bug**: The `check_filterable` method was checking for a `filterable` attribute on any object passed to it, including model instances that happen to have a field named `filterable`.\n\n2. **Applies the fix**: The modified method now only checks the `filterable` attribute when the expression is an instance of `BaseExpression`. This prevents false positives when filtering with model instances that have user-defined fields named `filterable`.\n\n3. **Preserves existing behavior**: The recursive check for nested expressions via `get_source_expressions` is maintained, and the error message and `NotSupportedError` raising logic remain unchanged as required by the `do_not_touch` constraints.",
+    "validate_edit": {
+      "passed": true,
+      "summary": "All validation checks passed. The edit correctly targets the check_filterable method in django/db/models/sql/query.py, adding an isinstance(expression, BaseExpression) check to prevent false positives when model instances have fields named 'filterable'. The old_string exists in the target file, the edit is specific to the issue, and all do_not_touch constraints are respected.",
+      "failedChecks": [],
+      "signature": "val-edt-a1b2c3"
+    }
+  },
+  "endedAt": "2026-03-30T14:53:21.977Z"
+}

@@ -1,0 +1,12 @@
+{
+  "sample_id": "django__django-13158",
+  "repo": "django/django",
+  "workflow": "/Users/denovo/workspace/github/obora-harnesses/harnesses/swe-bench/workflows/obora-os-workflow.yaml",
+  "obora_bin": "obora",
+  "failed_step": "",
+  "failure_type": "",
+  "failure_signature": "",
+  "attempt_count": 1,
+  "retry_count": 0,
+  "run_ok": true
+}

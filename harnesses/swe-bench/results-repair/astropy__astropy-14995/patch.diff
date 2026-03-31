@@ -1,0 +1,14 @@
+diff --git aa/astropy/nddata/mixins/ndarithmetic.py bb/astropy/nddata/mixins/ndarithmetic.py
+index 4153dfcc..14efa46a 100644
+--- aa/astropy/nddata/mixins/ndarithmetic.py
++++ bb/astropy/nddata/mixins/ndarithmetic.py
+@@ -522,6 +522,9 @@ class NDArithmeticMixin:
+             return deepcopy(operand.mask)
+         elif operand is None:
+             return deepcopy(self.mask)
++        elif operand.mask is None:
++            # Only self has a mask, return a copy of it
++            return deepcopy(self.mask)
+         else:
+             # Now lets calculate the resulting mask (operation enforces copy)
+             return handle_mask(self.mask, operand.mask, **kwds)

@@ -1,0 +1,29 @@
+diff --git aa/django/db/models/fields/__init__.py bb/django/db/models/fields/__init__.py
+index 9ce46e3f..7bde33c2 100644
+--- aa/django/db/models/fields/__init__.py
++++ bb/django/db/models/fields/__init__.py
+@@ -978,6 +978,24 @@ class CharField(Field):
+         else:
+             return []
+ 
++    def _check_choices(self):
++        errors = super()._check_choices()
++        if errors:
++            return errors
++        if self.choices and self.max_length is not None:
++            max_choice_length = max(len(str(choice)) for choice, _ in self.flatchoices)
++            if max_choice_length > self.max_length:
++                return [
++                    checks.Error(
++                        "'max_length' is too small to fit the longest value in 'choices' "
++                        "(longest value is %(max_choice_length)d characters).",
++                        obj=self,
++                        id='fields.E009',
++                        params={'max_choice_length': max_choice_length},
++                    )
++                ]
++        return []
++
+     def cast_db_type(self, connection):
+         if self.max_length is None:
+             return connection.ops.cast_char_field_without_max_length
