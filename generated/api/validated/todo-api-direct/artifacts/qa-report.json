@@ -1,0 +1,138 @@
+{
+  "evaluationDate": "2026-03-31",
+  "evaluator": "evaluate_contract",
+  "contractVersion": "1.0",
+  "implementationVersion": "1.0",
+  "summary": {
+    "totalChecks": 13,
+    "passedChecks": 13,
+    "failedChecks": 0,
+    "overallStatus": "PASS"
+  },
+  "endpointCoverage": [
+    {
+      "method": "GET",
+      "path": "/todos",
+      "status": "PASS",
+      "notes": "Returns empty array on startup, list of all todos otherwise"
+    },
+    {
+      "method": "POST",
+      "path": "/todos",
+      "status": "PASS",
+      "notes": "Creates todo with title and optional description, returns 201 with id and completed=false"
+    },
+    {
+      "method": "GET",
+      "path": "/todos/:id",
+      "status": "PASS",
+      "notes": "Returns todo or 404 if not found"
+    },
+    {
+      "method": "PUT",
+      "path": "/todos/:id",
+      "status": "PASS",
+      "notes": "Fully replaces todo, returns 200 or 404"
+    },
+    {
+      "method": "PATCH",
+      "path": "/todos/:id",
+      "status": "PASS",
+      "notes": "Partially updates todo fields, returns 200 or 404"
+    },
+    {
+      "method": "DELETE",
+      "path": "/todos/:id",
+      "status": "PASS",
+      "notes": "Deletes todo, returns 204 or 404"
+    }
+  ],
+  "httpStatusCodes": [
+    {
+      "code": 200,
+      "usedCorrectly": true,
+      "endpoints": ["GET /todos/:id", "PUT /todos/:id", "PATCH /todos/:id"]
+    },
+    {
+      "code": 201,
+      "usedCorrectly": true,
+      "endpoints": ["POST /todos"]
+    },
+    {
+      "code": 204,
+      "usedCorrectly": true,
+      "endpoints": ["DELETE /todos/:id"]
+    },
+    {
+      "code": 400,
+      "usedCorrectly": true,
+      "endpoints": ["All endpoints - invalid input validation"]
+    },
+    {
+      "code": 404,
+      "usedCorrectly": true,
+      "endpoints": ["All endpoints - resource/route not found"]
+    },
+    {
+      "code": 500,
+      "usedCorrectly": true,
+      "endpoints": ["Global error handler"]
+    }
+  ],
+  "validationChecks": [
+    {
+      "check": "Title required and non-empty string",
+      "status": "PASS",
+      "endpoints": ["POST /todos", "PUT /todos/:id", "PATCH /todos/:id"]
+    },
+    {
+      "check": "Description optional string",
+      "status": "PASS",
+      "endpoints": ["POST /todos", "PUT /todos/:id", "PATCH /todos/:id"]
+    },
+    {
+      "check": "Completed boolean validation",
+      "status": "PASS",
+      "endpoints": ["PUT /todos/:id", "PATCH /todos/:id"]
+    },
+    {
+      "check": "ID integer validation",
+      "status": "PASS",
+      "endpoints": ["GET /todos/:id", "PUT /todos/:id", "PATCH /todos/:id", "DELETE /todos/:id"]
+    }
+  ],
+  "storageCheck": {
+    "type": "in-memory",
+    "implementation": "todos array with nextId counter",
+    "status": "PASS",
+    "notes": "Data resets on server restart as specified"
+  },
+  "errorHandling": {
+    "status": "PASS",
+    "notes": "Clear error messages with appropriate HTTP status codes for 400, 404, and 500 errors"
+  },
+  "jsonConsistency": {
+    "status": "PASS",
+    "notes": "All responses use consistent JSON format with express.json() middleware"
+  },
+  "idempotencyCheck": {
+    "putIdempotent": true,
+    "deleteIdempotent": true,
+    "notes": "PUT fully replaces resource, DELETE on non-existent returns 404 (idempotent)"
+  },
+  "documentationCheck": {
+    "status": "PASS",
+    "notes": "API is self-documenting through clear endpoint contracts in implementation-notes.md and spec.md"
+  },
+  "failedChecks": [],
+  "observations": [
+    "PUT endpoint requires description field (as per full replace semantics)",
+    "PATCH allows partial updates of any field",
+    "Title trimming applied on create and update",
+    "ID generation uses sequential counter starting at 1"
+  ],
+  "recommendations": [
+    "None - implementation meets all contract requirements"
+  ],
+  "conclusion": "The Todo REST API implementation fully satisfies all acceptance criteria and quality expectations defined in the contract. All 6 CRUD endpoints are functional with proper HTTP semantics, input validation, error handling, and consistent JSON responses."
+}

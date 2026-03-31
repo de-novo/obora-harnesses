@@ -1,0 +1,167 @@
+name: todo-api-enhanced
+version: "1.0"
+description: "Bounded long-running product harness for a small Todo REST API"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./src
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: API planner
+    temperature: 0.2
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: API contractor
+    temperature: 0.1
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: API implementation agent
+    temperature: 0.1
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: API evaluator
+    temperature: 0
+
+steps:
+  - name: plan_product
+    agent: planner
+    input:
+      task: |
+        Create a concise product spec for a local Todo REST API.
+
+        Write to artifacts/spec.md.
+
+        Include only:
+        - target user
+        - primary use cases
+        - required endpoints
+        - non-goals
+        - quality expectations
+
+        Important:
+        - Focus on a minimal, functional REST API
+        - Use simple in-memory storage (no database required)
+        - RESTful design principles
+        - Clear API documentation
+
+  - name: define_contract
+    agent: contractor
+    depends_on: [plan_product]
+    input:
+      task: |
+        Read artifacts/spec.md.
+
+        Write EXACTLY one JSON object to artifacts/task-contract.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "scope":"...",
+          "acceptanceCriteria":["..."],
+          "nonGoals":["..."],
+          "qaChecks":["..."],
+          "taskBreakdown":["..."],
+          "definitionOfDone":"..."
+        }
+
+        Rules:
+        - Keep the scope very small and bounded
+        - This slice should only target minimal CRUD endpoints
+        - Explicitly defer advanced features (authentication, pagination, filtering) to future iterations
+        - TaskBreakdown must contain only 2-4 very small execution-ordered tasks
+
+  - name: implement_scaffold
+    agent: generator
+    depends_on: [define_contract]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract.json
+
+        Implement only the smallest possible scaffold for the current contract.
+
+        Scope for this step:
+        - Create basic Express.js server setup
+        - Create in-memory storage for todos
+        - Create health check endpoint
+        - Create basic error handling
+
+        Rules:
+        - Do not implement full CRUD yet
+        - Use Express.js with minimal dependencies
+        - Keep it simple and functional
+        - If useful, update artifacts/implementation-notes.md with short notes only
+
+  - name: implement_crud
+    agent: generator
+    depends_on: [implement_scaffold]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract.json
+        - artifacts/implementation-notes.md if it exists
+
+        Extend the current scaffold to support basic CRUD operations:
+        - GET /api/todos - List all todos
+        - POST /api/todos - Create a new todo
+        - GET /api/todos/:id - Get a specific todo
+        - PUT /api/todos/:id - Update a todo
+        - DELETE /api/todos/:id - Delete a todo
+
+        Rules:
+        - Preserve the existing server setup
+        - Keep the artifact runnable
+        - Avoid speculative extra features
+        - Use proper HTTP status codes
+
+  - name: evaluate_contract
+    agent: evaluator
+    depends_on: [implement_crud]
+    on_fail:
+      goto: implement_crud
+      max_iterations: 2
+      escalate_on_exhaust: fail
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract.json
+        - artifacts/implementation-notes.md if it exists
+
+        Evaluate the current Todo REST API artifact against the current contract.
+
+        Check for:
+        - All CRUD endpoints working correctly
+        - Proper HTTP status codes
+        - In-memory storage correctness
+        - Understandable error handling
+        - Basic API documentation
+
+        Write a structured QA report to artifacts/qa-report.json.
+
+        Then return ONLY a strict ValidationResult JSON object.
+        No markdown fences. No prose.
+
+        ValidationResult shape:
+        {
+          "passed": true or false,
+          "summary": "...",
+          "failedChecks": [
+            {"name":"...","message":"...","file":"..."}
+          ],
+          "signature": "stable-short-signature"
+        }

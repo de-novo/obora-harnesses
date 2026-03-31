@@ -1,0 +1,36 @@
+{
+  "scope": "Implement a minimal in-memory Todo REST API with 6 endpoints (GET/POST /todos, GET/PUT/PATCH/DELETE /todos/{id}) using in-memory storage only",
+  "acceptanceCriteria": [
+    "GET /todos returns empty array on startup or list of all todos",
+    "POST /todos creates todo with title and optional description, returns 201 with created todo including generated id and completed=false",
+    "GET /todos/{id} returns todo or 404 if not found",
+    "PUT /todos/{id} fully replaces todo, returns 200 or 404",
+    "PATCH /todos/{id} partially updates todo fields, returns 200 or 404",
+    "DELETE /todos/{id} deletes todo and returns 204 or 404",
+    "Invalid input returns 400 with error message",
+    "All responses are JSON with consistent structure"
+  ],
+  "nonGoals": [
+    "User authentication or authorization",
+    "Persistent storage (database or file)",
+    "Multi-user support",
+    "Pagination, filtering, or search",
+    "Due dates, priorities, or categorization",
+    "Bulk operations",
+    "API documentation beyond endpoint contracts"
+  ],
+  "qaChecks": [
+    "Verify HTTP status codes match RESTful semantics (201, 200, 204, 400, 404)",
+    "Test idempotency of PUT and DELETE operations",
+    "Validate input rejection for missing required fields or invalid data types",
+    "Verify JSON response consistency across all endpoints",
+    "Test concurrent request handling for basic data integrity",
+    "Confirm in-memory storage is isolated (data resets on restart)"
+  ],
+  "taskBreakdown": [
+    "Initialize project structure and in-memory storage model",
+    "Implement GET/POST /todos endpoints",
+    "Implement GET/PUT/PATCH/DELETE /todos/{id} endpoints with validation and error handling"
+  ],
+  "definitionOfDone": "All 6 endpoints are functional with proper HTTP semantics, input validation returns appropriate errors, and all responses are consistent JSON format"
+}
