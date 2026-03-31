@@ -1,0 +1,35 @@
+{
+  "scope": "Extend the CLI todo application with status changes and deletion: done (mark task completed), delete (remove task), and clear (remove all tasks). Build on existing help, add, and list commands.",
+  "acceptanceCriteria": [
+    "Running 'done <id>' marks the specified task as completed",
+    "Running 'list' displays tasks with their completion status",
+    "Running 'delete <id>' removes the specified task from storage",
+    "Running 'clear' removes all tasks from storage with user confirmation",
+    "Data persists correctly after done, delete, and clear operations",
+    "Clear error messages shown for invalid task IDs"
+  ],
+  "nonGoals": [
+    "Undone command to mark tasks back to pending",
+    "Filtering by completion status in list command",
+    "Bulk operations (delete multiple tasks at once)",
+    "Undo/redo functionality",
+    "Remote sync, authentication, or collaboration",
+    "Priority levels, due dates, or tagging",
+    "Interactive TUI or shell",
+    "Plugin architecture or extensibility"
+  ],
+  "qaChecks": [
+    "Done command updates task status that appears in subsequent list output",
+    "Delete command removes task that no longer appears in list output",
+    "Clear command removes all tasks, resulting in empty list output",
+    "Clear command requires user confirmation before executing",
+    "Clear error shown when done/delete called with non-existent ID",
+    "Data file remains valid JSON after done, delete, or clear operations",
+    "Existing add and list commands continue to work unchanged"
+  ],
+  "taskBreakdown": [
+    "Implement task status model and done command to mark tasks completed",
+    "Implement delete command to remove individual tasks by ID and clear command to remove all tasks with confirmation"
+  ],
+  "definitionOfDone": "CLI executable supports done, delete, and clear commands in addition to existing help, add, and list. Done marks tasks as completed and list displays status. Delete removes specified tasks. Clear removes all tasks with confirmation. All operations persist correctly to local JSON storage with appropriate error handling."
+}

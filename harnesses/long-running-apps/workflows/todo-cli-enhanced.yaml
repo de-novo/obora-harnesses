@@ -2,6 +2,16 @@ name: todo-cli-enhanced
 version: "1.0"
 description: "Bounded long-running product harness for a small Todo CLI"
 
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./src
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
 agents:
   planner:
     provider: zai

@@ -1,0 +1,32 @@
+{
+  "scope": "Implement a minimal CLI todo application with three commands: help (usage), add (create a task), and list (display all tasks). Tasks are persisted locally to a JSON file. No status changes, no deletion, no filtering.",
+  "acceptanceCriteria": [
+    "Running 'help' displays usage information for all available commands",
+    "Running 'add <text>' creates a task and persists it to local storage",
+    "Running 'list' displays all stored tasks with unique identifiers",
+    "Data persists across program runs using local JSON file storage",
+    "Clear error messages shown for missing arguments or invalid usage"
+  ],
+  "nonGoals": [
+    "Marking tasks as done or undone",
+    "Deleting or removing tasks",
+    "Clearing all tasks",
+    "Filtering by status or other criteria",
+    "Remote sync, authentication, or collaboration",
+    "Priority levels, due dates, or tagging",
+    "Interactive TUI or shell",
+    "Plugin architecture or extensibility"
+  ],
+  "qaChecks": [
+    "Add command creates task that appears in subsequent list output",
+    "Data file exists and contains valid JSON after add operation",
+    "Help command runs without errors",
+    "List command runs without errors when data file is empty",
+    "Clear error shown when add is called without task text"
+  ],
+  "taskBreakdown": [
+    "Implement basic CLI argument parsing with help, add, and list subcommands",
+    "Implement local JSON file persistence and task model for add/list operations"
+  ],
+  "definitionOfDone": "A CLI executable that accepts help, add, and list commands; add creates tasks that persist to a local JSON file; list displays all persisted tasks; all operations complete with appropriate output or error messages. No done, delete, or clear functionality exists."
+}

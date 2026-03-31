@@ -1,0 +1,95 @@
+{
+  "evaluationDate": "2026-03-31",
+  "contractScope": "slice2 - done, delete, and clear commands",
+  "overallResult": "PASS",
+  "checks": [
+    {
+      "name": "done_command_marks_completed",
+      "status": "PASS",
+      "evidence": "cmd_done() calls mark_done() which sets task['done'] = True and persists. Confirmation message shown on success.",
+      "file": "todo_cli/cli.py, todo_cli/storage.py"
+    },
+    {
+      "name": "done_status_appears_in_list",
+      "status": "PASS",
+      "evidence": "cmd_list() displays '✓' for completed tasks and ' ' for pending. Uses task.get('done') safely.",
+      "file": "todo_cli/cli.py"
+    },
+    {
+      "name": "delete_removes_task",
+      "status": "PASS",
+      "evidence": "cmd_delete() calls delete_task() which removes task from list and persists. Confirmation message shown.",
+      "file": "todo_cli/cli.py, todo_cli/storage.py"
+    },
+    {
+      "name": "delete_task_not_in_list",
+      "status": "PASS",
+      "evidence": "After delete, task no longer appears in list output because it's removed from storage array.",
+      "file": "todo_cli/storage.py"
+    },
+    {
+      "name": "clear_requires_confirmation",
+      "status": "PASS",
+      "evidence": "cmd_clear() prompts user with input('Delete all completed tasks? (y/N): ') and only executes on 'y'.",
+      "file": "todo_cli/cli.py"
+    },
+    {
+      "name": "clear_removes_all_tasks",
+      "status": "PASS",
+      "evidence": "clear_completed_tasks() filters out all tasks where done=True and persists. Returns removed count.",
+      "file": "todo_cli/storage.py"
+    },
+    {
+      "name": "clear_only_removes_completed",
+      "status": "PASS",
+      "evidence": "Filter condition: [task for task in tasks if not task.get('done')]. Pending tasks preserved.",
+      "file": "todo_cli/storage.py"
+    },
+    {
+      "name": "error_invalid_task_id",
+      "status": "PASS",
+      "evidence": "done/delete validate int conversion with try/except, show 'Error: invalid task ID' on ValueError.",
+      "file": "todo_cli/cli.py"
+    },
+    {
+      "name": "error_nonexistent_id",
+      "status": "PASS",
+      "evidence": "mark_done/delete return False if not found, CLI shows 'Error: task #X not found' and exits(1).",
+      "file": "todo_cli/cli.py, todo_cli/storage.py"
+    },
+    {
+      "name": "storage_valid_json_after_ops",
+      "status": "PASS",
+      "evidence": "All operations use save_tasks() with json.dump(tasks, f, indent=2). Maintains JSON array structure.",
+      "file": "todo_cli/storage.py"
+    },
+    {
+      "name": "existing_add_list_unchanged",
+      "status": "PASS",
+      "evidence": "cmd_add() and cmd_list() retain original logic. Only list output added status indicator.",
+      "file": "todo_cli/cli.py"
+    },
+    {
+      "name": "data_persists_correctly",
+      "status": "PASS",
+      "evidence": "mark_done, delete_task, clear_completed_tasks all call save_tasks() after modifications.",
+      "file": "todo_cli/storage.py"
+    }
+  ],
+  "maintainabilityNotes": [
+    "Consistent error handling pattern across done/delete (arg validation -> int parse -> storage call -> success/failure message)",
+    "Clear separation: storage layer handles persistence, CLI layer handles I/O and validation",
+    "Safe use of task.get('done') handles legacy tasks without 'done' field",
+    "Confirmation prompt in clear has sensible default (y/N requires explicit 'y' to proceed)",
+    "All commands exit(1) on error with stderr output"
+  ],
+  "issues": [],
+  "acceptanceCriteriaMet": [
+    "Running 'done <id>' marks the specified task as completed",
+    "Running 'list' displays tasks with their completion status",
+    "Running 'delete <id>' removes the specified task from storage",
+    "Running 'clear' removes all tasks from storage with user confirmation",
+    "Data persists correctly after done, delete, and clear operations",
+    "Clear error messages shown for invalid task IDs"
+  ]
+}
