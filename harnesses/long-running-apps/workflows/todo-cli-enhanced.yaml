@@ -66,12 +66,14 @@ steps:
         }
 
         Rules:
-        - keep the scope bounded
-        - taskBreakdown must contain small, explicit, execution-ordered tasks
+        - keep the scope very small and bounded
+        - this first slice should only target a minimal core: help, add, and list with local persistence
+        - explicitly defer done, delete/remove, and clear to future iterations
+        - taskBreakdown must contain only 2-4 very small execution-ordered tasks
         - do not prescribe unnecessary low-level code structure
         - define what must be true when this implementation slice is done
 
-  - name: implement_contract
+  - name: implement_scaffold
     agent: generator
     depends_on: [define_contract]
     input:
@@ -81,23 +83,46 @@ steps:
         - artifacts/task-contract.json
         - artifacts/qa-report.json if it exists
 
-        Implement the Todo CLI inside the current working directory.
+        Implement only the smallest possible scaffold for the current contract.
 
-        Requirements:
-        - satisfy the current contract first
-        - follow the taskBreakdown in order
+        Scope for this step:
+        - ensure the CLI entrypoint exists and runs
+        - ensure help output exists
+        - ensure local file persistence scaffold exists
+
+        Rules:
+        - do not implement done/delete/clear
+        - do not implement polish work
+        - keep changes very small
+        - if useful, update artifacts/implementation-notes.md with short notes only
+
+  - name: implement_add_list
+    agent: generator
+    depends_on: [implement_scaffold]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract.json
+        - artifacts/implementation-notes.md if it exists
+        - artifacts/qa-report.json if it exists
+
+        Extend the current scaffold only enough to support:
+        - add
+        - list
+        - correct local persistence for those commands
+
+        Rules:
+        - preserve the existing entrypoint/help behavior
         - keep the artifact runnable
-        - avoid unnecessary extra features
-        - avoid speculative large rewrites
+        - avoid speculative extra features
         - if repairing, change only what is needed to address evaluator feedback
-
-        If useful, update artifacts/implementation-notes.md with only short high-value notes.
 
   - name: evaluate_contract
     agent: evaluator
-    depends_on: [implement_contract]
+    depends_on: [implement_add_list]
     on_fail:
-      goto: implement_contract
+      goto: implement_add_list
       max_iterations: 2
       escalate_on_exhaust: fail
     input:
@@ -110,9 +135,10 @@ steps:
         Evaluate the current Todo CLI artifact against the current contract.
 
         Check for:
-        - command coverage
-        - storage correctness
         - help output clarity
+        - add command behavior
+        - list command behavior
+        - storage correctness for the implemented slice
         - understandable error handling
         - obvious maintainability issues
 
@@ -131,19 +157,3 @@ steps:
           "signature": "stable-short-signature"
         }
 
-  - name: summarize_comparison
-    agent: evaluator
-    depends_on: [evaluate_contract]
-    input:
-      task: |
-        Read:
-        - artifacts/spec.md
-        - artifacts/task-contract.json
-        - artifacts/qa-report.json
-
-        Write a short summary to artifacts/comparison-summary.md.
-
-        Include:
-        - what the enhanced artifact achieved
-        - what still looks weak or incomplete
-        - why this artifact is stronger or weaker than a one-shot baseline
