@@ -8,6 +8,6 @@
   },
   "scripts": {
     "start": "node ./src/index.js",
-    "smoke": "node ./src/index.js help && node ./src/index.js clear && node ./src/index.js add \"smoke task\" && node ./src/index.js list && node ./src/index.js done 1 && node ./src/index.js remove 1"
+    "smoke": "node ./src/index.js help && node ./src/index.js clear && node ./src/index.js add \"smoke task\" && node ./src/index.js list && node ./src/index.js done 1 && node ./src/index.js delete 1"
   }
 }

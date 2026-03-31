@@ -32,19 +32,21 @@ function writeStore(store) {
 }
 
 function printHelp() {
-  console.log(`Todo CLI (enhanced workflow artifact)\n
+  console.log(`Todo CLI\n
 Usage:
   todo-cli-enhanced help
-  todo-cli-enhanced add <text>
-  todo-cli-enhanced list [--all|--done|--open]
+  todo-cli-enhanced add <task>
+  todo-cli-enhanced list
   todo-cli-enhanced done <id>
-  todo-cli-enhanced remove <id>
+  todo-cli-enhanced delete <id>
   todo-cli-enhanced clear
 
-Notes:
-  - data is stored locally in JSON
-  - ids are numeric and stable within the local store
-  - list defaults to open items only
+Commands:
+  add <task>    Create a new pending task
+  list          Display all tasks with status indicators
+  done <id>     Mark a specific task as completed
+  delete <id>   Remove a task by ID
+  clear         Delete all completed tasks
 `);
 }
 
@@ -54,74 +56,77 @@ function parseId(value) {
   return id;
 }
 
-function normalizeText(parts) {
+function normalizeTaskText(parts) {
   const text = parts.join(' ').trim();
-  if (!text) throw new Error('Todo text is required.');
+  if (!text) throw new Error('Task description is required.');
   return text;
 }
 
-function addTodo(parts) {
-  const text = normalizeText(parts);
+function addTask(parts) {
+  const description = normalizeTaskText(parts);
   const store = readStore();
-  const todo = {
+  const task = {
     id: store.nextId++,
-    text,
-    done: false,
-    createdAt: new Date().toISOString(),
-    completedAt: null
+    description,
+    status: 'pending'
   };
-  store.todos.push(todo);
+  store.todos.push(task);
   writeStore(store);
-  console.log(`Added todo #${todo.id}: ${todo.text}`);
+  console.log(`Added task #${task.id}: ${task.description}`);
 }
 
-function listTodos(args) {
-  const filter = args[0] ?? '--open';
+function listTasks() {
   const store = readStore();
-  let todos = store.todos;
-  if (filter === '--done') todos = todos.filter((t) => t.done);
-  else if (filter === '--open') todos = todos.filter((t) => !t.done);
-  else if (filter !== '--all') throw new Error(`Unknown list filter: ${filter}`);
+  const todos = store.todos;
 
   if (todos.length === 0) {
-    console.log('No matching todos.');
+    console.log('No tasks.');
     return;
   }
 
-  for (const todo of todos) {
-    const status = todo.done ? '[x]' : '[ ]';
-    console.log(`${status} ${todo.id}. ${todo.text}`);
+  for (const task of todos) {
+    const status = task.status === 'completed' ? '[x]' : '[ ]';
+    console.log(`${status} ${task.id}. ${task.description}`);
   }
 }
 
-function doneTodo(idValue) {
+function doneTask(idValue) {
   const id = parseId(idValue);
   const store = readStore();
-  const todo = store.todos.find((item) => item.id === id);
-  if (!todo) throw new Error(`Todo #${id} not found.`);
-  if (todo.done) {
-    console.log(`Todo #${id} is already done.`);
+  const task = store.todos.find((item) => item.id === id);
+  if (!task) throw new Error(`Task #${id} not found.`);
+  if (task.status === 'completed') {
+    console.log(`Task #${id} is already completed.`);
     return;
   }
-  todo.done = true;
-  todo.completedAt = new Date().toISOString();
+  task.status = 'completed';
   writeStore(store);
-  console.log(`Marked todo #${id} as done.`);
+  console.log(`Marked task #${id} as completed.`);
 }
 
-function removeTodo(idValue) {
+function deleteTask(idValue) {
   const id = parseId(idValue);
   const store = readStore();
   const index = store.todos.findIndex((item) => item.id === id);
-  if (index === -1) throw new Error(`Todo #${id} not found.`);
+  if (index === -1) throw new Error(`Task #${id} not found.`);
   const [removed] = store.todos.splice(index, 1);
   writeStore(store);
-  console.log(`Removed todo #${removed.id}: ${removed.text}`);
+  console.log(`Deleted task #${removed.id}: ${removed.description}`);
 }
 
-function clearTodos() {
-  writeStore({ todos: [], nextId: 1 });
-  console.log('Cleared all todos and reset local storage.');
+function clearTasks() {
+  const store = readStore();
+  const originalCount = store.todos.length;
+  store.todos = store.todos.filter((task) => task.status !== 'completed');
+  const clearedCount = originalCount - store.todos.length;
+  
+  if (clearedCount === 0) {
+    console.log('No completed tasks to clear.');
+    return;
+  }
+  
+  writeStore(store);
+  console.log(`Cleared ${clearedCount} completed task(s).`);
 }
 
 function main(argv) {
@@ -134,19 +139,19 @@ function main(argv) {
       printHelp();
       return;
     case 'add':
-      addTodo(args);
+      addTask(args);
       return;
     case 'list':
-      listTodos(args);
+      listTasks();
       return;
     case 'done':
-      doneTodo(args[0]);
+      doneTask(args[0]);
       return;
-    case 'remove':
-      removeTodo(args[0]);
+    case 'delete':
+      deleteTask(args[0]);
       return;
     case 'clear':
-      clearTodos();
+      clearTasks();
       return;
     default:
       throw new Error(`Unknown command: ${command}`);

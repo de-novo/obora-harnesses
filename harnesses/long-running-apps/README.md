@@ -25,10 +25,19 @@ Comparison targets:
 - distinguish runtime failures from quality failures
 
 ## Expected artifacts
-- `product-brief.md`
+Keep artifacts minimal.
+
+Default artifact set:
 - `spec.md`
-- `milestones.json`
-- `backlog.json`
-- `sprint-contract.json`
+- `task-contract.json`
 - `qa-report.json`
 - `comparison-summary.md`
+
+Optional artifact:
+- `implementation-notes.md` (only when short change/context notes add value)
+
+Each artifact should be explicit enough that a human can understand:
+- what the product is trying to do
+- what the current bounded task is
+- what is intentionally out of scope
+- why a revision happened

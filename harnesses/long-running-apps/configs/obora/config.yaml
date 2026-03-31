@@ -1,0 +1,27 @@
+defaults:
+  provider: zai
+  model: glm-4.7
+  timeout: 180
+
+providers:
+  zai:
+    authMode: token
+    authRef: global:zai
+    defaultModel: glm-4.7
+
+agents:
+  planner:
+    role: Product planner
+    temperature: 0.2
+
+  contractor:
+    role: Task contractor
+    temperature: 0.1
+
+  generator:
+    role: CLI implementation agent
+    temperature: 0.1
+
+  evaluator:
+    role: CLI evaluator
+    temperature: 0

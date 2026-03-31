@@ -1,6 +1,6 @@
 name: todo-cli-enhanced
 version: "1.0"
-description: "Long-running product harness for a small Todo CLI with planning, contracting, implementation, and evaluation"
+description: "Bounded long-running product harness for a small Todo CLI"
 
 agents:
   planner:
@@ -11,7 +11,7 @@ agents:
   contractor:
     provider: zai
     model: glm-4.7
-    role: Sprint contractor
+    role: Task contractor
     temperature: 0.1
   generator:
     provider: zai
@@ -29,55 +29,30 @@ steps:
     agent: planner
     input:
       task: |
-        Create a concise product brief for a local Todo CLI.
+        Create a concise product spec for a local Todo CLI.
 
-        Write to artifacts/product-brief.md.
+        Write to artifacts/spec.md.
 
-        Include:
+        Include only:
         - target user
         - primary use cases
         - required commands
         - non-goals
         - quality expectations
 
-  - name: expand_spec
-    agent: planner
-    depends_on: [plan_product]
-    input:
-      task: |
-        Read artifacts/product-brief.md.
-
-        Write a practical implementation spec to artifacts/spec.md.
-
-        Include:
-        - command surface
-        - persistence approach
-        - expected UX behavior
-        - error handling expectations
-        - implementation constraints
-
-  - name: build_backlog
-    agent: planner
-    depends_on: [expand_spec]
-    input:
-      task: |
-        Read artifacts/product-brief.md and artifacts/spec.md.
-
-        Write a milestone/backlog plan to artifacts/backlog.json.
-
-        Keep it small. The first milestone should be enough to produce a usable minimum Todo CLI.
+        Important:
+        - do not prescribe detailed code structure
+        - do not lock implementation to specific function/class/file designs unless strictly necessary
+        - focus on product intent, boundaries, and success conditions
 
   - name: define_contract
     agent: contractor
-    depends_on: [build_backlog]
+    depends_on: [plan_product]
     input:
       task: |
-        Read:
-        - artifacts/product-brief.md
-        - artifacts/spec.md
-        - artifacts/backlog.json
+        Read artifacts/spec.md.
 
-        Write EXACTLY one JSON object to artifacts/sprint-contract.json.
+        Write EXACTLY one JSON object to artifacts/task-contract.json.
         No markdown fences. No prose.
 
         Required shape:
@@ -85,10 +60,16 @@ steps:
           "scope":"...",
           "acceptanceCriteria":["..."],
           "nonGoals":["..."],
-          "qaChecks":["..."]
+          "qaChecks":["..."],
+          "taskBreakdown":["..."],
+          "definitionOfDone":"..."
         }
 
-        The contract should define the first implementation slice for the Todo CLI.
+        Rules:
+        - keep the scope bounded
+        - taskBreakdown must contain small, explicit, execution-ordered tasks
+        - do not prescribe unnecessary low-level code structure
+        - define what must be true when this implementation slice is done
 
   - name: implement_contract
     agent: generator
@@ -96,20 +77,21 @@ steps:
     input:
       task: |
         Read:
-        - artifacts/product-brief.md
         - artifacts/spec.md
-        - artifacts/sprint-contract.json
+        - artifacts/task-contract.json
         - artifacts/qa-report.json if it exists
 
         Implement the Todo CLI inside the current working directory.
 
         Requirements:
-        - keep the implementation small and runnable
-        - satisfy the sprint contract first
+        - satisfy the current contract first
+        - follow the taskBreakdown in order
+        - keep the artifact runnable
         - avoid unnecessary extra features
+        - avoid speculative large rewrites
         - if repairing, change only what is needed to address evaluator feedback
 
-        Also write a short implementation note to artifacts/implementation-notes.md.
+        If useful, update artifacts/implementation-notes.md with only short high-value notes.
 
   - name: evaluate_contract
     agent: evaluator
@@ -121,12 +103,11 @@ steps:
     input:
       task: |
         Read:
-        - artifacts/product-brief.md
         - artifacts/spec.md
-        - artifacts/sprint-contract.json
+        - artifacts/task-contract.json
         - artifacts/implementation-notes.md if it exists
 
-        Evaluate the current Todo CLI artifact.
+        Evaluate the current Todo CLI artifact against the current contract.
 
         Check for:
         - command coverage
@@ -149,3 +130,20 @@ steps:
           ],
           "signature": "stable-short-signature"
         }
+
+  - name: summarize_comparison
+    agent: evaluator
+    depends_on: [evaluate_contract]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract.json
+        - artifacts/qa-report.json
+
+        Write a short summary to artifacts/comparison-summary.md.
+
+        Include:
+        - what the enhanced artifact achieved
+        - what still looks weak or incomplete
+        - why this artifact is stronger or weaker than a one-shot baseline
