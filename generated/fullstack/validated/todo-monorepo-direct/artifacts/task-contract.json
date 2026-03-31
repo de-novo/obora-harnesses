@@ -1,0 +1,33 @@
+{
+  "scope": "Minimal viable todo app with web frontend and RESTful API using in-memory storage. Features: add, list, toggle completion, edit, delete tasks, clear completed, task counter, and basic validation.",
+  "acceptanceCriteria": [
+    "User can add a task via text input and submit button",
+    "User can view all tasks in a single list",
+    "User can toggle task completion status via checkbox",
+    "User can edit task text inline",
+    "User can delete individual tasks",
+    "User can clear all completed tasks",
+    "Task counter displays total, remaining, and completed counts",
+    "Validation prevents empty task submissions"
+  ],
+  "nonGoals": [
+    "User authentication",
+    "Database persistence",
+    "Task categorization or tagging",
+    "Due dates or reminders",
+    "Multiple lists or sharing"
+  ],
+  "qaChecks": [
+    "API response times under 100ms",
+    "Empty task submission is rejected with clear error message",
+    "Task state updates reflect immediately in UI without page reload",
+    "Clear completed removes only completed tasks",
+    "Task counter accurately reflects current state after any operation"
+  ],
+  "taskBreakdown": [
+    "Set up monorepo structure (packages/web, packages/api) with build configuration",
+    "Implement API endpoints (GET/POST/PUT/DELETE /tasks, POST /tasks/clear) with in-memory storage",
+    "Build web frontend with task list UI and wire API integration"
+  ],
+  "definitionOfDone": "All acceptance criteria met, all QA checks passing, code reviewed against spec, and features verified in modern browser."
+}

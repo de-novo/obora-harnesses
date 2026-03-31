@@ -1,0 +1,7 @@
+[2m  → plan_product[0m
+[2m  → define_contract[0m
+[2m  → setup_monorepo[0m
+[2m  → implement_api[0m
+[2m  → implement_web[0m
+[2m  → evaluate_contract[0m
+[32m✅ Workflow "todo-monorepo-enhanced" completed.[0m

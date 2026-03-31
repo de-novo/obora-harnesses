@@ -1,0 +1,197 @@
+name: todo-monorepo-enhanced
+version: "1.0"
+description: "Full-stack Todo application with Web UI and REST API in monorepo"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./packages
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Full-stack planner
+    temperature: 0.2
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Full-stack contractor
+    temperature: 0.1
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Full-stack implementation agent
+    temperature: 0.1
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Full-stack evaluator
+    temperature: 0
+
+steps:
+  - name: plan_product
+    agent: planner
+    input:
+      task: |
+        Create a concise product spec for a full-stack Todo application.
+
+        Write to artifacts/spec.md.
+
+        Include only:
+        - target user
+        - primary use cases
+        - architecture overview (Web + API)
+        - required features
+        - non-goals
+        - quality expectations
+
+        Important:
+        - Monorepo structure with packages/api and packages/web
+        - Web consumes API
+        - Simple in-memory storage
+        - Modern UI with vanilla JS or minimal framework
+
+  - name: define_contract
+    agent: contractor
+    depends_on: [plan_product]
+    input:
+      task: |
+        Read artifacts/spec.md.
+
+        Write EXACTLY one JSON object to artifacts/task-contract.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "scope":"...",
+          "acceptanceCriteria":["..."],
+          "nonGoals":["..."],
+          "qaChecks":["..."],
+          "taskBreakdown":["..."],
+          "definitionOfDone":"..."
+        }
+
+        Rules:
+        - Keep the scope very small and bounded
+        - This slice should only target minimal viable product
+        - TaskBreakdown must contain only 3-5 very small execution-ordered tasks
+
+  - name: setup_monorepo
+    agent: generator
+    depends_on: [define_contract]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract.json
+
+        Create monorepo structure:
+        - Root package.json with workspaces
+        - packages/api/ - Express.js REST API
+        - packages/web/ - Static HTML/CSS/JS frontend
+
+        Scope for this step:
+        - Root package.json with workspaces config
+        - packages/api/package.json
+        - packages/web/package.json
+        - README.md with monorepo instructions
+
+        Rules:
+        - Use npm workspaces
+        - Keep it minimal
+        - No shared packages yet
+
+  - name: implement_api
+    agent: generator
+    depends_on: [setup_monorepo]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract.json
+
+        Implement the REST API in packages/api:
+        - Express.js server
+        - In-memory todo storage
+        - CORS enabled for web client
+        - CRUD endpoints:
+          - GET /api/todos
+          - POST /api/todos
+          - PATCH /api/todos/:id
+          - DELETE /api/todos/:id
+        - Error handling
+
+        Rules:
+        - Server should run on port 3001
+        - CORS should allow packages/web origin
+        - Keep it simple and functional
+
+  - name: implement_web
+    agent: generator
+    depends_on: [implement_api]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract.json
+
+        Implement the Web UI in packages/web:
+        - Static HTML file
+        - CSS for styling
+        - Vanilla JavaScript for:
+          - Fetch todos from API
+          - Display todo list
+          - Add new todo
+          - Mark todo as complete
+          - Delete todo
+        - Simple, clean UI
+
+        Rules:
+        - Use fetch API to communicate with packages/api
+        - API base URL: http://localhost:3001
+        - Responsive design
+        - No build step required
+
+  - name: evaluate_contract
+    agent: evaluator
+    depends_on: [implement_web]
+    on_fail:
+      goto: implement_api
+      max_iterations: 2
+      escalate_on_exhaust: fail
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract.json
+
+        Evaluate the full-stack Todo application.
+
+        Check for:
+        - Monorepo structure correct
+        - API runs and responds correctly
+        - Web UI loads and displays todos
+        - Web can create/update/delete todos via API
+        - CORS properly configured
+        - Basic error handling
+
+        Write a structured QA report to artifacts/qa-report.json.
+
+        Then return ONLY a strict ValidationResult JSON object.
+        No markdown fences. No prose.
+
+        ValidationResult shape:
+        {
+          "passed": true or false,
+          "summary": "...",
+          "failedChecks": [
+            {"name":"...","message":"...","file":"..."}
+          ],
+          "signature": "stable-short-signature"
+        }
