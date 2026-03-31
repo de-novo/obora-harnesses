@@ -118,7 +118,7 @@ steps:
         - avoid speculative extra features
         - if repairing, change only what is needed to address evaluator feedback
 
-  - name: evaluate_contract
+  - name: evaluate_contract_slice1
     agent: evaluator
     depends_on: [implement_add_list]
     on_fail:
@@ -142,7 +142,141 @@ steps:
         - understandable error handling
         - obvious maintainability issues
 
-        Write a structured QA report to artifacts/qa-report.json.
+        Write a structured QA report to artifacts/qa-report-slice1.json.
+
+        Then return ONLY a strict ValidationResult JSON object.
+        No markdown fences. No prose.
+
+        ValidationResult shape:
+        {
+          "passed": true or false,
+          "summary": "...",
+          "failedChecks": [
+            {"name":"...","message":"...","file":"..."}
+          ],
+          "signature": "stable-short-signature"
+        }
+
+  # Slice-2: done/delete/clear
+  - name: define_contract_slice2
+    agent: contractor
+    depends_on: [evaluate_contract_slice1]
+    input:
+      task: |
+        Read artifacts/spec.md and artifacts/task-contract.json.
+
+        Write EXACTLY one JSON object to artifacts/task-contract-slice2.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "scope":"...",
+          "acceptanceCriteria":["..."],
+          "nonGoals":["..."],
+          "qaChecks":["..."],
+          "taskBreakdown":["..."],
+          "definitionOfDone":"..."
+        }
+
+        Rules:
+        - this slice targets done, delete, and clear commands
+        - assume help/add/list are already implemented
+        - taskBreakdown must contain only 2-3 very small execution-ordered tasks
+        - do not prescribe unnecessary low-level code structure
+        - define what must be true when this slice is done
+
+  - name: implement_done
+    agent: generator
+    depends_on: [define_contract_slice2]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract-slice2.json
+        - artifacts/implementation-notes.md if it exists
+        - artifacts/qa-report-slice1.json if it exists
+
+        Extend the current Todo CLI to support the done command.
+
+        Scope for this step:
+        - add done <id> command
+        - mark a todo as completed
+        - update storage correctly
+        - preserve existing help/add/list behavior
+
+        Rules:
+        - keep changes very small
+        - update artifacts/implementation-notes.md with short notes
+
+  - name: implement_delete
+    agent: generator
+    depends_on: [implement_done]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract-slice2.json
+        - artifacts/implementation-notes.md if it exists
+
+        Extend the current Todo CLI to support the delete command.
+
+        Scope for this step:
+        - add delete <id> command
+        - remove a todo by id
+        - update storage correctly
+        - preserve existing help/add/list/done behavior
+
+        Rules:
+        - keep changes very small
+        - update artifacts/implementation-notes.md with short notes
+
+  - name: implement_clear
+    agent: generator
+    depends_on: [implement_delete]
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract-slice2.json
+        - artifacts/implementation-notes.md if it exists
+
+        Extend the current Todo CLI to support the clear command.
+
+        Scope for this step:
+        - add clear command
+        - delete all completed todos
+        - update storage correctly
+        - preserve existing help/add/list/done/delete behavior
+
+        Rules:
+        - keep changes very small
+        - update artifacts/implementation-notes.md with short notes
+
+  - name: evaluate_contract_slice2
+    agent: evaluator
+    depends_on: [implement_clear]
+    on_fail:
+      goto: implement_done
+      max_iterations: 2
+      escalate_on_exhaust: fail
+    input:
+      task: |
+        Read:
+        - artifacts/spec.md
+        - artifacts/task-contract-slice2.json
+        - artifacts/implementation-notes.md if it exists
+
+        Evaluate the current Todo CLI artifact against the slice-2 contract.
+
+        Check for:
+        - done command behavior
+        - delete command behavior
+        - clear command behavior
+        - storage correctness after destructive operations
+        - understandable error handling
+        - obvious maintainability issues
+
+        Write a structured QA report to artifacts/qa-report-slice2.json.
 
         Then return ONLY a strict ValidationResult JSON object.
         No markdown fences. No prose.
