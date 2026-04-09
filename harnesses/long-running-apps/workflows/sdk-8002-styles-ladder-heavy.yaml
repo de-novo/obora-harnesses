@@ -1,0 +1,61 @@
+name: sdk-8002-styles-ladder-heavy
+version: "1.0"
+description: "Styles ladder heavy"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Style ladder heavy agent
+    temperature: 0.1
+
+steps:
+  - name: prepare_context
+    agent: generator
+    input:
+      task: |
+        Create these component files first:
+        - packages/web/src/App.tsx
+        - packages/web/src/components/TodoForm.tsx
+        - packages/web/src/components/TodoList.tsx
+        - packages/web/src/components/TodoItem.tsx
+        - packages/web/src/components/Footer.tsx
+
+        Keep them minimal.
+
+  - name: write_heavy_style
+    agent: generator
+    depends_on: [prepare_context]
+    input:
+      task: |
+        Read the component structure in packages/web/src.
+
+        Write packages/web/src/App.css for a production-suitable Todo UI.
+
+        Include:
+        - responsive card layout
+        - gradients/background treatment
+        - header and stat chips
+        - form/input/button styling
+        - list/item states
+        - completed state
+        - editing state
+        - delete button interactions
+        - footer actions
+        - loading state
+        - error state
+        - empty state
+        - mobile breakpoint
+        - styles aligned to component structure
+
+        Also write artifacts/style-ladder-heavy-summary.md.

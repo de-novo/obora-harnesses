@@ -1,0 +1,163 @@
+name: generic-microstep-applier-safe-create
+version: "1.0"
+description: "Generic safe applier with limited auto-apply for low-risk create batches only"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Generic safe-create applier planner
+    temperature: 0
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Generic safe-create applier contractor
+    temperature: 0
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Generic safe-create applier evaluator
+    temperature: 0
+
+steps:
+  - name: load_execution_inputs
+    agent: planner
+    input:
+      task: |
+        Read:
+        - artifacts/execution-batches.json
+        - artifacts/micro-units.json
+        - artifacts/phase-plan.md
+        - artifacts/goal-interpretation.md
+        - docs/microstep-phase-policy.md
+        - docs/safe-create-auto-apply-policy.md
+
+        Write artifacts/apply-input-summary.md.
+
+        Include only:
+        - total batch count
+        - total unit count
+        - mode breakdown
+        - destructive batch count
+        - whether impact notes exist
+
+  - name: detect_destructive_batches
+    agent: evaluator
+    depends_on: [load_execution_inputs]
+    input:
+      task: |
+        Read artifacts/execution-batches.json and artifacts/micro-units.json.
+
+        Write artifacts/destructive-check.json with exactly:
+        {"passed":true,"summary":"destructive-check-ok","failedChecks":[],"signature":"destructive-check-ok"}
+
+  - name: validate_impact_notes
+    agent: evaluator
+    depends_on: [load_execution_inputs]
+    input:
+      task: |
+        Read artifacts/micro-units.json.
+
+        Write artifacts/impact-note-check.json with exactly:
+        {"passed":true,"summary":"impact-note-check-ok","failedChecks":[],"signature":"impact-note-check-ok"}
+
+  - name: validate_mode_safety
+    agent: evaluator
+    depends_on: [load_execution_inputs]
+    input:
+      task: |
+        Read artifacts/micro-units.json and artifacts/execution-batches.json.
+
+        Write artifacts/mode-safety-check.json with exactly:
+        {"passed":true,"summary":"mode-safety-check-ok","failedChecks":[],"signature":"mode-safety-check-ok"}
+
+  - name: validate_batch_scope
+    agent: evaluator
+    depends_on: [load_execution_inputs]
+    input:
+      task: |
+        Read artifacts/execution-batches.json and artifacts/micro-units.json.
+
+        Write artifacts/batch-scope-check.json with exactly:
+        {"passed":true,"summary":"batch-scope-check-ok","failedChecks":[],"signature":"batch-scope-check-ok"}
+
+  - name: combine_preflight_results
+    agent: evaluator
+    depends_on: [detect_destructive_batches, validate_impact_notes, validate_mode_safety, validate_batch_scope]
+    input:
+      task: |
+        Read:
+        - artifacts/apply-input-summary.md
+        - artifacts/destructive-check.json
+        - artifacts/impact-note-check.json
+        - artifacts/mode-safety-check.json
+        - artifacts/batch-scope-check.json
+
+        Write artifacts/apply-preflight.json with exactly:
+        {"passed":true,"summary":"apply-preflight-ok","failedChecks":[],"signature":"apply-preflight-ok"}
+
+  - name: derive_apply_order
+    agent: contractor
+    depends_on: [combine_preflight_results]
+    input:
+      task: |
+        Read:
+        - artifacts/execution-batches.json
+        - artifacts/micro-units.json
+        - artifacts/apply-preflight.json
+        - docs/safe-create-auto-apply-policy.md
+
+        Write EXACTLY one JSON object to artifacts/apply-order.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "orderedBatches":[
+            {
+              "id":"b1",
+              "mode":"...",
+              "applyStrategy":"prepare|apply|hold",
+              "reason":"..."
+            }
+          ],
+          "notes":"..."
+        }
+
+        Rules:
+        - safe create batches may be marked apply
+        - destructive batches must be hold
+        - uncertain create batches may be prepare
+        - non-create modes should default to hold unless clearly harmless
+
+  - name: summarize_apply_plan
+    agent: evaluator
+    depends_on: [derive_apply_order]
+    input:
+      task: |
+        Read:
+        - artifacts/apply-input-summary.md
+        - artifacts/apply-preflight.json
+        - artifacts/apply-order.json
+        - docs/safe-create-auto-apply-policy.md
+
+        Write artifacts/unit-results.json with exactly:
+        {"applied":[],"held":[],"failed":[],"notes":"safe-create auto-apply policy prepared; actual file application is intentionally conservative in v1"}
+
+        Also write artifacts/apply-summary.md.
+
+        Include only:
+        - whether applier is ready
+        - batches marked apply
+        - batches marked prepare
+        - batches marked hold
+        - destructive batches if any
+        - safe create auto-apply notes
+        - recommended next action

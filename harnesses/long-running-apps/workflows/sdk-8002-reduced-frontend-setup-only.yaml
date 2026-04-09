@@ -1,0 +1,45 @@
+name: sdk-8002-reduced-frontend-setup-only
+version: "1.0"
+description: "Reduced repro: setup-only from frontend upgrade"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend setup agent
+    temperature: 0.1
+
+steps:
+  - name: setup_react_vite
+    agent: generator
+    input:
+      task: |
+        Setup a minimal React + Vite + TypeScript frontend in packages/web.
+
+        Create only these files:
+        - packages/web/package.json
+        - packages/web/tsconfig.json
+        - packages/web/vite.config.ts
+        - packages/web/index.html
+        - packages/web/src/main.tsx
+        - packages/web/src/App.tsx
+
+        Requirements:
+        - React 19
+        - Vite 6
+        - TypeScript
+        - minimal placeholder app
+        - no extra explanation
+
+        Also write artifacts/setup-summary.txt with exactly:
+        setup-complete

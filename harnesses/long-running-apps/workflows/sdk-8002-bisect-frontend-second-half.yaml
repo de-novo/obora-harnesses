@@ -1,0 +1,91 @@
+name: sdk-8002-bisect-frontend-second-half
+version: "1.0"
+description: "Bisect repro: second half of frontend upgrade workflow"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend implementation agent
+    temperature: 0.1
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend evaluator
+    temperature: 0
+
+steps:
+  - name: migrate_components
+    agent: generator
+    input:
+      task: |
+        Assume the framework is already selected and setup is available.
+
+        Create component structure in packages/web:
+        - packages/web/src/components/TodoForm.tsx
+        - packages/web/src/components/TodoList.tsx
+        - packages/web/src/components/TodoItem.tsx
+        - packages/web/src/services/api.ts
+        - packages/web/src/types/todo.ts
+
+        Requirements:
+        - Todo CRUD UI structure
+        - fetch-based API module
+        - TypeScript types
+        - minimal but realistic component implementation
+
+        Also write artifacts/component-summary.md summarizing what was created.
+
+  - name: migrate_styles
+    agent: generator
+    depends_on: [migrate_components]
+    input:
+      task: |
+        Create styling files for the migrated frontend.
+
+        Write:
+        - packages/web/src/App.css
+
+        Requirements:
+        - responsive todo layout
+        - clean card UI
+        - styles for form, list, item, completed state, error, loading
+
+        Also write artifacts/style-summary.md with a short summary.
+
+  - name: evaluate_upgrade
+    agent: evaluator
+    depends_on: [migrate_styles]
+    input:
+      task: |
+        Evaluate the migrated frontend structure.
+
+        Check:
+        - expected files exist conceptually
+        - component split is reasonable
+        - styles cover the required UI
+
+        Write artifacts/upgrade-qa-report.json.
+
+        Then return ONLY a strict ValidationResult JSON object.
+        No markdown fences. No prose.
+
+        ValidationResult shape:
+        {
+          "passed": true or false,
+          "summary": "...",
+          "failedChecks": [
+            {"name":"...","message":"...","file":"..."}
+          ],
+          "signature": "stable-short-signature"
+        }

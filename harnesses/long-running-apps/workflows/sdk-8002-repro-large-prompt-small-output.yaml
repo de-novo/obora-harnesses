@@ -1,0 +1,122 @@
+name: sdk-8002-repro-large-prompt-small-output
+version: "1.0"
+description: "Stress repro: very large prompt, tiny output"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Large prompt stress agent
+    temperature: 0
+
+steps:
+  - name: large_prompt_write
+    agent: planner
+    input:
+      task: |
+        This is a large-prompt stress repro for SDK_8002.
+
+        Your actual required output is very small.
+        Ignore the fact that the instruction body is long; it exists only to increase prompt complexity.
+
+        Context block A:
+        - We are testing cancellation behavior in a workflow engine.
+        - We want to separate prompt size from chain depth.
+        - We want to separate prompt size from output formatting complexity.
+        - We want to separate prompt size from multi-file generation.
+        - The final output must remain tiny and deterministic.
+
+        Context block B:
+        - The system has previously succeeded on write-only workflow.
+        - The system has previously succeeded on read-then-write workflow.
+        - The system has previously succeeded on a 4-step chain workflow.
+        - The system has previously succeeded on a short research-style prompt.
+        - Therefore this repro specifically targets prompt size / instruction density.
+
+        Context block C:
+        - Do not browse the web.
+        - Do not create multiple files.
+        - Do not return markdown in the tool response.
+        - Do not generate structured JSON in the tool response.
+        - Do not produce analysis text outside the requested file.
+
+        Context block D:
+        - Imagine a frontend framework comparison among React, Vue, Svelte, and Solid.
+        - Imagine evaluation criteria such as ecosystem, bundle size, performance, learning curve, hiring pool, TypeScript support, tooling maturity, SSR support, and future-proofing.
+        - Imagine additional considerations such as runtime model, compiler usage, fine-grained reactivity, server rendering strategy, form handling, developer experience, and maintainability.
+        - Imagine a long planning phase, but do not actually write it out.
+        - Keep the final artifact tiny.
+
+        Context block E:
+        - Repeat the goal internally: large prompt, tiny output.
+        - Repeat the rule internally: one file only.
+        - Repeat the success marker internally: LARGE-PROMPT-OK.
+        - Repeat the failure interpretation internally: if this cancels, prompt size becomes a stronger suspect.
+        - Repeat the scope internally: no chain complexity, no evaluator, no structured return.
+
+        Context block F:
+        - Additional filler line 01
+        - Additional filler line 02
+        - Additional filler line 03
+        - Additional filler line 04
+        - Additional filler line 05
+        - Additional filler line 06
+        - Additional filler line 07
+        - Additional filler line 08
+        - Additional filler line 09
+        - Additional filler line 10
+        - Additional filler line 11
+        - Additional filler line 12
+        - Additional filler line 13
+        - Additional filler line 14
+        - Additional filler line 15
+        - Additional filler line 16
+        - Additional filler line 17
+        - Additional filler line 18
+        - Additional filler line 19
+        - Additional filler line 20
+        - Additional filler line 21
+        - Additional filler line 22
+        - Additional filler line 23
+        - Additional filler line 24
+        - Additional filler line 25
+        - Additional filler line 26
+        - Additional filler line 27
+        - Additional filler line 28
+        - Additional filler line 29
+        - Additional filler line 30
+        - Additional filler line 31
+        - Additional filler line 32
+        - Additional filler line 33
+        - Additional filler line 34
+        - Additional filler line 35
+        - Additional filler line 36
+        - Additional filler line 37
+        - Additional filler line 38
+        - Additional filler line 39
+        - Additional filler line 40
+        - Additional filler line 41
+        - Additional filler line 42
+        - Additional filler line 43
+        - Additional filler line 44
+        - Additional filler line 45
+        - Additional filler line 46
+        - Additional filler line 47
+        - Additional filler line 48
+        - Additional filler line 49
+        - Additional filler line 50
+
+        Required action:
+        Write exactly this content to artifacts/large-prompt-result.txt:
+
+        LARGE-PROMPT-OK
+
+        Do not write anything else.

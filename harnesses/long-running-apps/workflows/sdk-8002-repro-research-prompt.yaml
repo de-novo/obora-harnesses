@@ -1,0 +1,37 @@
+name: sdk-8002-repro-research-prompt
+version: "1.0"
+description: "Minimal repro: research-style prompt and artifact write"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Research-style planner
+    temperature: 0.1
+
+steps:
+  - name: research_style_write
+    agent: planner
+    input:
+      task: |
+        Research-style task for repro.
+
+        Compare these frontend frameworks briefly:
+        - React
+        - Vue
+        - Svelte
+
+        Important:
+        - Keep the response very short.
+        - Write only a tiny markdown note to artifacts/research.md.
+        - The note must contain exactly 3 bullet points and 1 final recommendation line.
+
+        This is a repro workflow, so brevity is required.

@@ -1,0 +1,77 @@
+name: sdk-8002-repro-multistep-chain
+version: "1.0"
+description: "Minimal repro: 4-step artifact chain"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Minimal planner
+    temperature: 0
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Minimal contractor
+    temperature: 0
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Minimal generator
+    temperature: 0
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Minimal evaluator
+    temperature: 0
+
+steps:
+  - name: plan
+    agent: planner
+    input:
+      task: |
+        Write artifacts/spec.md with exactly:
+
+        # Spec
+        value: chain-ok
+
+  - name: contract
+    agent: contractor
+    depends_on: [plan]
+    input:
+      task: |
+        Read artifacts/spec.md.
+
+        Write EXACTLY this JSON object to artifacts/task-contract.json:
+        {"value":"chain-ok","steps":4}
+
+  - name: generate
+    agent: generator
+    depends_on: [contract]
+    input:
+      task: |
+        Read artifacts/task-contract.json.
+
+        Write artifacts/generated.txt with exactly:
+
+        generated: chain-ok
+
+  - name: evaluate
+    agent: evaluator
+    depends_on: [generate]
+    input:
+      task: |
+        Read artifacts/generated.txt.
+
+        Write artifacts/qa-report.json with exactly:
+        {"passed":true,"summary":"chain-ok"}
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"chain-ok","failedChecks":[],"signature":"chain-ok"}

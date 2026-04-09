@@ -1,0 +1,45 @@
+name: todo-react-upgrade-phase3
+version: "1.0"
+description: "Phase 3: list/item components and app wiring"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend generator
+    temperature: 0.1
+
+steps:
+  - name: create_list_components
+    agent: generator
+    input:
+      task: |
+        Create only these files:
+        - packages/web/src/components/TodoList.tsx
+        - packages/web/src/components/TodoItem.tsx
+
+        Requirements:
+        - TodoList renders list of todos
+        - TodoItem renders checkbox, text, delete button
+
+  - name: wire_app_logic
+    agent: generator
+    depends_on: [create_list_components]
+    input:
+      task: |
+        Update only this file:
+        - packages/web/src/App.tsx
+
+        Requirements:
+        - fetch todos on mount
+        - add/toggle/delete handlers
+        - stats for total/remaining/completed
+        - render TodoForm and TodoList

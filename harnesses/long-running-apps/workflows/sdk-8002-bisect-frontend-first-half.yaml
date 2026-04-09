@@ -1,0 +1,113 @@
+name: sdk-8002-bisect-frontend-first-half
+version: "1.0"
+description: "Bisect repro: first half of frontend upgrade workflow"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Frontend framework researcher and planner
+    temperature: 0.2
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Frontend contractor
+    temperature: 0.1
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend implementation agent
+    temperature: 0.1
+
+steps:
+  - name: research_frameworks
+    agent: planner
+    input:
+      task: |
+        Research modern frontend frameworks for 2026.
+
+        Compare:
+        - React 19
+        - Vue 4
+        - Svelte 6
+        - Solid 3
+
+        Write research findings to artifacts/framework-research.md.
+
+        Include for each framework:
+        - latest version and key features
+        - performance characteristics
+        - ecosystem maturity
+        - TypeScript support
+        - production suitability
+
+        Then write artifacts/framework-decision.md with:
+        - short comparison
+        - final recommendation
+        - selection rationale
+
+  - name: define_upgrade_contract
+    agent: contractor
+    depends_on: [research_frameworks]
+    input:
+      task: |
+        Read:
+        - artifacts/framework-research.md
+        - artifacts/framework-decision.md
+
+        Write EXACTLY one JSON object to artifacts/upgrade-contract.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "selectedFramework": "...",
+          "selectionRationale": "...",
+          "scope": "Upgrade packages/web from vanilla HTML to selected framework",
+          "acceptanceCriteria": [
+            "Framework properly configured",
+            "Build process works",
+            "Dev server runs"
+          ],
+          "taskBreakdown": [
+            "Setup framework and build tooling",
+            "Create entry point",
+            "Configure dev/build scripts"
+          ],
+          "definitionOfDone": "Setup files are created"
+        }
+
+  - name: setup_framework
+    agent: generator
+    depends_on: [define_upgrade_contract]
+    input:
+      task: |
+        Read:
+        - artifacts/framework-decision.md
+        - artifacts/upgrade-contract.json
+
+        Setup the selected frontend framework in packages/web.
+
+        Tasks:
+        - Update packages/web/package.json with framework dependencies
+        - Add build tooling
+        - Create framework entry point
+        - Configure dev server with API proxy
+
+        Write:
+        - packages/web/package.json
+        - packages/web/vite.config.js or vite.config.ts
+        - packages/web/index.html
+        - packages/web/src/main.js or main.tsx
+        - packages/web/src/App.tsx
+
+        Keep the setup minimal.

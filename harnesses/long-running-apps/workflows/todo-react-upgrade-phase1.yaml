@@ -1,0 +1,93 @@
+name: todo-react-upgrade-phase1
+version: "1.0"
+description: "Phase 1: research, contract, package and tooling setup"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Frontend planner
+    temperature: 0.1
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Frontend contractor
+    temperature: 0
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend generator
+    temperature: 0.1
+
+steps:
+  - name: research_framework_choice
+    agent: planner
+    input:
+      task: |
+        Compare React, Vue, Svelte, and Solid for upgrading a Todo web UI.
+
+        Write artifacts/framework-decision.md.
+
+        Include only:
+        - short comparison table
+        - selected framework
+        - 3 reasons for selection
+
+  - name: define_micro_contract
+    agent: contractor
+    depends_on: [research_framework_choice]
+    input:
+      task: |
+        Read artifacts/framework-decision.md.
+
+        Write EXACTLY one JSON object to artifacts/upgrade-contract.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "selectedFramework":"...",
+          "scope":"phase-1 setup",
+          "rules":["one responsibility per step","max 2 files per step"],
+          "definitionOfDone":"tooling files created"
+        }
+
+  - name: setup_package_json
+    agent: generator
+    depends_on: [define_micro_contract]
+    input:
+      task: |
+        Read artifacts/upgrade-contract.json.
+
+        Create only this file:
+        - packages/web/package.json
+
+        Requirements:
+        - React 19
+        - react-dom 19
+        - Vite 6
+        - TypeScript 5
+        - scripts: dev, build, preview
+
+  - name: setup_ts_and_vite
+    agent: generator
+    depends_on: [setup_package_json]
+    input:
+      task: |
+        Create only these files:
+        - packages/web/tsconfig.json
+        - packages/web/vite.config.ts
+
+        Requirements:
+        - TS config for React + Vite
+        - Vite dev server config
+        - API proxy to http://localhost:3001

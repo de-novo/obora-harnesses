@@ -1,0 +1,222 @@
+name: todo-frontend-upgrade
+version: "1.0"
+description: "Upgrade Todo Web UI from vanilla HTML to modern frontend framework"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Frontend framework researcher and planner
+    temperature: 0.2
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Frontend contractor
+    temperature: 0.1
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend implementation agent
+    temperature: 0.1
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend evaluator
+    temperature: 0
+
+steps:
+  - name: research_frameworks
+    agent: planner
+    input:
+      task: |
+        Research modern frontend frameworks for 2026.
+
+        Use web search to investigate:
+        - React 19 (latest features, Server Components, etc.)
+        - Vue 4 (Composition API, Performance)
+        - Svelte 6 (Runes, Compilation)
+        - Solid 3 (Fine-grained reactivity)
+
+        Search queries to use:
+        - "React 19 features 2026 production ready"
+        - "Vue 4 composition API 2026"
+        - "Svelte 6 runes performance 2026"
+        - "Solid 3 fine-grained reactivity 2026"
+        - "frontend framework comparison 2026 React Vue Svelte Solid"
+
+        Write research findings to artifacts/framework-research.md.
+
+        Include for each framework:
+        - Latest version and key features
+        - Bundle size and performance
+        - Learning curve
+        - Ecosystem maturity
+        - TypeScript support
+        - Production readiness in 2026
+
+        Then write artifacts/framework-decision.md with:
+        - Comparison table
+        - Pros/cons for our Todo app use case
+        - Final recommendation with clear rationale
+        - Selection criteria used
+
+  - name: define_upgrade_contract
+    agent: contractor
+    depends_on: [research_frameworks]
+    input:
+      task: |
+        Read:
+        - artifacts/framework-research.md
+        - artifacts/framework-decision.md
+
+        Write EXACTLY one JSON object to artifacts/upgrade-contract.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "selectedFramework": "...",
+          "selectionRationale": "...",
+          "scope": "Upgrade packages/web from vanilla HTML to selected framework",
+          "acceptanceCriteria": [
+            "Framework properly configured",
+            "All existing features work (add/complete/delete)",
+            "Build process works",
+            "Dev server runs",
+            "Production build succeeds"
+          ],
+          "nonGoals": [
+            "No API changes",
+            "No new features",
+            "No backend modifications"
+          ],
+          "qaChecks": [
+            "npm install succeeds",
+            "npm run dev starts dev server",
+            "npm run build creates production bundle",
+            "Todo CRUD operations work in browser"
+          ],
+          "taskBreakdown": [
+            "Setup framework and build tooling",
+            "Convert HTML structure to framework components",
+            "Migrate vanilla JS to framework patterns",
+            "Configure dev and build scripts",
+            "Test all features"
+          ],
+          "definitionOfDone": "All features work, build succeeds, dev server runs"
+        }
+
+  - name: setup_framework
+    agent: generator
+    depends_on: [define_upgrade_contract]
+    input:
+      task: |
+        Read:
+        - artifacts/framework-decision.md
+        - artifacts/upgrade-contract.json
+
+        Setup the selected frontend framework in packages/web.
+
+        Tasks:
+        - Update packages/web/package.json with framework dependencies
+        - Add build tooling (Vite, or framework-specific)
+        - Create framework entry point
+        - Configure dev server with API proxy (localhost:3001)
+        - Add TypeScript if framework supports it well
+
+        Write:
+        - packages/web/package.json (updated)
+        - packages/web/vite.config.js (or equivalent)
+        - packages/web/index.html (updated for framework)
+        - packages/web/src/main.js or main.ts (entry point)
+
+  - name: migrate_components
+    agent: generator
+    depends_on: [setup_framework]
+    input:
+      task: |
+        Read:
+        - artifacts/upgrade-contract.json
+        - Current packages/web/app.js (vanilla implementation)
+
+        Migrate vanilla JS to framework components.
+
+        Create:
+        - App component (main container)
+        - TodoForm component (add new todo)
+        - TodoList component (display list)
+        - TodoItem component (individual todo)
+        - API service module (fetch wrapper)
+
+        Keep same functionality:
+        - Fetch todos from API
+        - Display todo list
+        - Add new todo
+        - Mark as complete
+        - Delete todo
+        - Show stats (total/remaining/completed)
+
+        Use framework best practices:
+        - State management
+        - Event handling
+        - Conditional rendering
+        - List rendering with keys
+
+  - name: migrate_styles
+    agent: generator
+    depends_on: [migrate_components]
+    input:
+      task: |
+        Read current packages/web/styles.css.
+
+        Migrate styles to framework:
+        - Convert to framework-specific styling (CSS modules, styled-components, or keep as CSS)
+        - Ensure all styles work with new component structure
+        - Keep responsive design
+
+        Write updated style files.
+
+  - name: evaluate_upgrade
+    agent: evaluator
+    depends_on: [migrate_styles]
+    on_fail:
+      goto: setup_framework
+      max_iterations: 2
+      escalate_on_exhaust: fail
+    input:
+      task: |
+        Read:
+        - artifacts/upgrade-contract.json
+        - artifacts/framework-decision.md
+
+        Evaluate the framework upgrade.
+
+        Check:
+        - Framework correctly installed
+        - Build process works (npm run build)
+        - Dev server runs (npm run dev)
+        - All CRUD operations work
+        - UI looks correct
+        - No console errors
+
+        Write artifacts/upgrade-qa-report.json.
+
+        Then return ONLY a strict ValidationResult JSON object.
+        No markdown fences. No prose.
+
+        ValidationResult shape:
+        {
+          "passed": true or false,
+          "summary": "...",
+          "failedChecks": [
+            {"name":"...","message":"...","file":"..."}
+          ],
+          "signature": "stable-short-signature"
+        }

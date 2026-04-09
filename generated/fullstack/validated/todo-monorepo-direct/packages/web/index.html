@@ -1,44 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Todo App</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>My Tasks</h1>
-            <div class="stats">
-                <span id="total-count">0 total</span>
-                <span id="remaining-count">0 remaining</span>
-                <span id="completed-count">0 completed</span>
-            </div>
-        </header>
-
-        <form id="todo-form" class="todo-form">
-            <input 
-                type="text" 
-                id="todo-input" 
-                placeholder="What needs to be done?" 
-                autocomplete="off"
-                aria-label="New task input"
-            >
-            <button type="submit" class="btn btn-primary">Add</button>
-        </form>
-
-        <div id="error-message" class="error-message" role="alert"></div>
-
-        <ul id="todo-list" class="todo-list" role="list">
-            <!-- Todos will be rendered here -->
-        </ul>
-
-        <footer class="footer">
-            <button id="clear-completed" class="btn btn-secondary">Clear Completed</button>
-        </footer>
-    </div>
-
-    <script src="app.js"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo App - React</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

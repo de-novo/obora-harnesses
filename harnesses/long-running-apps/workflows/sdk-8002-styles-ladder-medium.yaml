@@ -1,0 +1,38 @@
+name: sdk-8002-styles-ladder-medium
+version: "1.0"
+description: "Styles ladder medium"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Style ladder medium agent
+    temperature: 0.1
+
+steps:
+  - name: write_medium_style
+    agent: generator
+    input:
+      task: |
+        Write packages/web/src/App.css for a Todo app.
+
+        Include:
+        - responsive container/card layout
+        - header and stats
+        - form styling
+        - list and item styling
+        - completed state
+        - loading state
+        - error state
+        - footer/actions
+        - mobile breakpoint

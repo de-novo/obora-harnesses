@@ -1,0 +1,88 @@
+name: sdk-8002-components-plus-styles
+version: "1.0"
+description: "Components plus styles repro without research/contract"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend implementation agent
+    temperature: 0.1
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend evaluator
+    temperature: 0
+
+steps:
+  - name: setup_minimal_context
+    agent: generator
+    input:
+      task: |
+        Create minimal setup files for a modern frontend.
+
+        Write:
+        - packages/web/package.json
+        - packages/web/index.html
+        - packages/web/src/main.tsx
+        - packages/web/styles.css
+
+        Keep setup minimal.
+
+  - name: migrate_components
+    agent: generator
+    depends_on: [setup_minimal_context]
+    input:
+      task: |
+        Create frontend component structure.
+
+        Write:
+        - packages/web/src/App.tsx
+        - packages/web/src/components/TodoForm.tsx
+        - packages/web/src/components/TodoList.tsx
+        - packages/web/src/components/TodoItem.tsx
+        - packages/web/src/services/api.ts
+        - packages/web/src/types/todo.ts
+
+        Keep functionality realistic for a Todo app.
+
+  - name: migrate_styles
+    agent: generator
+    depends_on: [migrate_components]
+    input:
+      task: |
+        Read current packages/web/styles.css and component files.
+
+        Write packages/web/src/App.css.
+
+        Requirements:
+        - responsive layout
+        - todo form styling
+        - todo list/item styling
+        - completed, loading, and error states
+        - footer/actions styling
+        - align styles to component structure
+
+        Also write artifacts/style-summary.md.
+
+  - name: evaluate
+    agent: evaluator
+    depends_on: [migrate_styles]
+    input:
+      task: |
+        Evaluate the generated frontend structure.
+
+        Write artifacts/qa-report.json with a short structured summary.
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"components-styles-ok","failedChecks":[],"signature":"components-styles-ok"}

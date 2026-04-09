@@ -1,0 +1,73 @@
+name: sdk-8002-reduced-frontend-combined
+version: "1.0"
+description: "Reduced repro: research + contract + setup from frontend upgrade"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Frontend planner
+    temperature: 0.2
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Frontend contractor
+    temperature: 0.1
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend setup generator
+    temperature: 0.1
+
+steps:
+  - name: research_frameworks
+    agent: planner
+    input:
+      task: |
+        Research frontend framework options for upgrading a Todo web UI.
+
+        Compare React, Vue, Svelte, Solid.
+        Write artifacts/framework-decision.md.
+
+        Include:
+        - short comparison table
+        - selected framework
+        - 3 reasons for selection
+
+  - name: define_contract
+    agent: contractor
+    depends_on: [research_frameworks]
+    input:
+      task: |
+        Read artifacts/framework-decision.md.
+
+        Write EXACTLY this JSON object to artifacts/upgrade-contract.json:
+        {"selectedFramework":"React","scope":"minimal setup","definitionOfDone":"setup files created"}
+
+  - name: setup_framework
+    agent: generator
+    depends_on: [define_contract]
+    input:
+      task: |
+        Read artifacts/upgrade-contract.json.
+
+        Create only these files:
+        - packages/web/package.json
+        - packages/web/index.html
+        - packages/web/src/main.tsx
+        - packages/web/src/App.tsx
+
+        Keep everything minimal.
+
+        Write artifacts/setup-summary.txt with exactly:
+        combined-setup-complete
