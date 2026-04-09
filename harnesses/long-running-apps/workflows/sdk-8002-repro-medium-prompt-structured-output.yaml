@@ -1,0 +1,52 @@
+name: sdk-8002-repro-medium-prompt-structured-output
+version: "1.0"
+description: "Stress repro: medium-large prompt with structured output pressure"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Structured output stress agent
+    temperature: 0
+
+steps:
+  - name: structured_output_stress
+    agent: evaluator
+    input:
+      task: |
+        This is a structured-output stress repro for SDK_8002.
+
+        Goal:
+        - increase prompt size moderately
+        - require both file output and strict JSON response
+        - keep workflow step count at 1
+
+        Constraints:
+        - no web search
+        - no chaining
+        - no multi-file generation
+        - only one artifact file
+        - one strict JSON return
+
+        Context:
+        - We suspect cancellation may correlate not only with prompt length but also with output formatting pressure.
+        - Therefore this repro asks for both a markdown-like artifact and a strict ValidationResult response.
+        - The artifact should remain tiny.
+        - The response should remain tiny.
+        - Determinism is important.
+
+        Write artifacts/structured-report.md with exactly:
+
+        # Structured Report
+        result: STRUCTURED-OK
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"STRUCTURED-OK","failedChecks":[],"signature":"structured-ok"}

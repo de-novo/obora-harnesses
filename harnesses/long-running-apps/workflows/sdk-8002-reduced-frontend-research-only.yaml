@@ -1,0 +1,43 @@
+name: sdk-8002-reduced-frontend-research-only
+version: "1.0"
+description: "Reduced repro: research-only from frontend upgrade"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Frontend framework researcher
+    temperature: 0.2
+
+steps:
+  - name: research_frameworks
+    agent: planner
+    input:
+      task: |
+        Research modern frontend frameworks for a Todo web UI upgrade.
+
+        Compare briefly:
+        - React
+        - Vue
+        - Svelte
+        - Solid
+
+        Write artifacts/framework-research.md.
+
+        Include only:
+        - ecosystem
+        - performance
+        - TypeScript support
+        - production suitability
+        - one final recommendation
+
+        Keep it concise but complete.
+        Do not create any other files.

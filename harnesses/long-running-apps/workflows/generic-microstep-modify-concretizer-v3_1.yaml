@@ -1,0 +1,214 @@
+name: generic-microstep-modify-concretizer-v3_1
+version: "3.1"
+description: "Concretizes modify units with strict modify-lane purity and concrete-file enforcement"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Modify concretizer v3.1 planner
+    temperature: 0
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Modify concretizer v3.1 contractor
+    temperature: 0
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Modify concretizer v3.1 evaluator
+    temperature: 0
+
+steps:
+  - name: materialize_discovery_inventories
+    agent: planner
+    input:
+      task: |
+        Read:
+        - artifacts/micro-units.json
+        - artifacts/apply-order.json
+        - docs/discovery-materialization-policy.md
+        - docs/modify-concretizer-v3_1-fix-note.md
+
+        Create discovery inventories inside artifacts/discovery/.
+
+        Write the following files:
+        - artifacts/discovery/tree-structure.md
+        - artifacts/discovery/documentation-catalog.md
+        - artifacts/discovery/workflow-inventory.md
+        - artifacts/discovery/script-inventory.md
+
+        Use the current repository/workspace contents available in this execution directory.
+        Keep each inventory concise and execution-oriented.
+
+  - name: extract_modify_pattern_units
+    agent: contractor
+    depends_on: [materialize_discovery_inventories]
+    input:
+      task: |
+        Read:
+        - artifacts/micro-units.json
+        - artifacts/apply-order.json
+        - docs/modify-concretizer-v2-policy.md
+        - docs/modify-concretizer-v3_1-fix-note.md
+
+        Write EXACTLY one JSON object to artifacts/modify-pattern-units.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "applyReadyUnits":[
+            {
+              "unitId":"u1",
+              "sourcePattern":"docs/x.md",
+              "reason":"..."
+            }
+          ],
+          "reviewReadyUnits":[
+            {
+              "unitId":"u2",
+              "sourcePattern":"docs/**/*.md",
+              "reason":"..."
+            }
+          ],
+          "skipped":[
+            {
+              "unitId":"u3",
+              "reason":"..."
+            }
+          ],
+          "notes":"..."
+        }
+
+        Strict rules:
+        - only mode=modify units are allowed in either lane
+        - applyReadyUnits require modify + applyStrategy=apply
+        - reviewReadyUnits require modify + applyStrategy=prepare and concretizable pattern intent
+        - create/audit/refactor/restructure/delete/prune/migrate must go to skipped
+        - wildcard-only targets should be skipped unless only retained as review note, never as apply-ready
+
+  - name: derive_apply_ready_candidates
+    agent: contractor
+    depends_on: [extract_modify_pattern_units]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-pattern-units.json
+        - artifacts/discovery/tree-structure.md
+        - artifacts/discovery/documentation-catalog.md
+        - artifacts/discovery/workflow-inventory.md
+        - artifacts/discovery/script-inventory.md
+        - docs/modify-concretizer-v2-policy.md
+        - docs/modify-concretizer-v3_1-fix-note.md
+
+        Write EXACTLY one JSON object to artifacts/modify-apply-ready-candidates.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "candidates":[
+            {
+              "unitId":"u1",
+              "sourcePattern":"docs/x.md",
+              "targetFile":"docs/x.md",
+              "reason":"...",
+              "priority":"high|medium|low",
+              "exactReplaceReady":false
+            }
+          ],
+          "notes":"..."
+        }
+
+        Strict rules:
+        - targetFile must be a concrete existing file path
+        - targetFile must not be a directory
+        - targetFile must not contain glob or wildcard characters
+        - abstract aliases such as artifacts/docs are not allowed unless they are real files
+        - if no compliant concrete file exists, return empty candidates
+
+  - name: derive_review_ready_candidates
+    agent: contractor
+    depends_on: [extract_modify_pattern_units]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-pattern-units.json
+        - artifacts/discovery/tree-structure.md
+        - artifacts/discovery/documentation-catalog.md
+        - artifacts/discovery/workflow-inventory.md
+        - artifacts/discovery/script-inventory.md
+        - docs/modify-concretizer-v2-policy.md
+
+        Write EXACTLY one JSON object to artifacts/modify-review-queue.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "reviewCandidates":[
+            {
+              "unitId":"u2",
+              "sourcePattern":"docs/**/*.md",
+              "targetFile":"docs/architecture.md",
+              "reason":"...",
+              "priority":"high|medium|low",
+              "exactReplaceReady":false,
+              "reviewLane":"prepare-review"
+            }
+          ],
+          "notes":"..."
+        }
+
+        Rules:
+        - review-ready may come only from modify + prepare units
+        - choose a small conservative subset
+        - prefer docs/workflows/scripts candidates
+        - concrete file target preferred when inventories support it
+        - if no concrete target can be justified, targetFile may be null in review lane only
+
+  - name: validate_concrete_outputs
+    agent: evaluator
+    depends_on: [derive_apply_ready_candidates, derive_review_ready_candidates]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-apply-ready-candidates.json
+        - artifacts/modify-review-queue.json
+        - docs/modify-concretizer-v3_1-fix-note.md
+
+        Validate output quality only.
+
+        Check:
+        - apply-ready contains only modify units
+        - apply-ready targetFile values are concrete existing files
+        - apply-ready targetFile values are not directories, globs, or aliases
+        - review-ready contains only modify prepare units
+
+        Write artifacts/modify-concretization-validation.json with exactly:
+        {"passed":true,"summary":"modify-concretizer-v3_1-ready","failedChecks":[],"signature":"modify-concretizer-v3_1-ready"}
+
+  - name: summarize_concretization
+    agent: evaluator
+    depends_on: [validate_concrete_outputs]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-apply-ready-candidates.json
+        - artifacts/modify-review-queue.json
+        - artifacts/modify-concretization-validation.json
+
+        Write artifacts/modify-concretization-summary.md.
+
+        Include only:
+        - whether lane purity was preserved
+        - apply-ready candidate count
+        - review-ready candidate count
+        - whether apply-ready targets are concrete files
+        - recommended next step

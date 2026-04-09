@@ -1,0 +1,63 @@
+name: sdk-8002-styles-only-heavy
+version: "1.0"
+description: "Styles-only heavy repro near migrate_styles complexity"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Style migration agent
+    temperature: 0.1
+
+steps:
+  - name: prepare_style_context
+    agent: generator
+    input:
+      task: |
+        Create a minimal frontend context for style migration.
+
+        Write these files:
+        - packages/web/src/App.tsx
+        - packages/web/src/components/TodoForm.tsx
+        - packages/web/src/components/TodoList.tsx
+        - packages/web/src/components/TodoItem.tsx
+        - packages/web/styles.css
+
+        Keep implementations minimal but realistic.
+        The styles.css file should contain vanilla Todo app styles.
+
+  - name: migrate_styles_heavy
+    agent: generator
+    depends_on: [prepare_style_context]
+    input:
+      task: |
+        Read current packages/web/styles.css and the component structure in packages/web/src.
+
+        Migrate styles to the new framework structure.
+
+        Requirements:
+        - Write packages/web/src/App.css
+        - Preserve responsive layout
+        - Preserve form styling
+        - Preserve todo list styling
+        - Preserve completed state styling
+        - Preserve footer/actions styling
+        - Add loading state styling
+        - Add error state styling
+        - Make styles work with component-based structure
+        - Keep the UI clean and production-suitable
+
+        Also write artifacts/style-summary.md with:
+        - what changed
+        - what was preserved
+        - what files styles now target

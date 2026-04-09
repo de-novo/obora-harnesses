@@ -1,0 +1,61 @@
+name: todo-react-upgrade-phase4
+version: "1.0"
+description: "Phase 4: styles and evaluation"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend generator
+    temperature: 0.1
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend evaluator
+    temperature: 0
+
+steps:
+  - name: create_base_styles
+    agent: generator
+    input:
+      task: |
+        Create only this file:
+        - packages/web/src/App.css
+
+        Requirements:
+        - container/card layout
+        - header and stats styling
+        - form styling
+        - list/item styling
+        - completed state
+        - footer styling
+        - responsive mobile breakpoint
+
+  - name: evaluate_micro_upgrade
+    agent: evaluator
+    depends_on: [create_base_styles]
+    input:
+      task: |
+        Evaluate the micro-step frontend upgrade.
+
+        Check:
+        - required files exist
+        - component split is reasonable
+        - App wiring exists
+        - API module exists
+        - style file exists
+
+        Write artifacts/micro-upgrade-qa.json.
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"micro-upgrade-structure-ok","failedChecks":[],"signature":"micro-upgrade-structure-ok"}

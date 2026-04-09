@@ -1,0 +1,58 @@
+name: todo-react-upgrade-phase2
+version: "1.0"
+description: "Phase 2: entry files, app shell, api module"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend generator
+    temperature: 0.1
+
+steps:
+  - name: setup_entry_files
+    agent: generator
+    input:
+      task: |
+        Create only these files:
+        - packages/web/index.html
+        - packages/web/src/main.tsx
+
+        Requirements:
+        - root div in index.html
+        - main.tsx renders App component
+
+  - name: create_app_shell
+    agent: generator
+    depends_on: [setup_entry_files]
+    input:
+      task: |
+        Create only these files:
+        - packages/web/src/App.tsx
+        - packages/web/src/types/todo.ts
+
+        Requirements:
+        - App shell with header, stats area, content area, footer
+        - Todo type definition
+        - minimal placeholder state allowed
+
+  - name: create_api_module
+    agent: generator
+    depends_on: [create_app_shell]
+    input:
+      task: |
+        Create only these files:
+        - packages/web/src/services/api.ts
+        - packages/web/src/components/TodoForm.tsx
+
+        Requirements:
+        - api.ts exposes getTodos, createTodo, updateTodo, deleteTodo
+        - TodoForm provides text input + submit button

@@ -1,0 +1,203 @@
+name: todo-react-upgrade-micro
+version: "1.0"
+description: "Upgrade Todo Web UI to modern frontend with strict micro-steps for Obora"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Frontend planner
+    temperature: 0.1
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Frontend contractor
+    temperature: 0
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend generator
+    temperature: 0.1
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Frontend evaluator
+    temperature: 0
+
+steps:
+  - name: research_framework_choice
+    agent: planner
+    input:
+      task: |
+        Compare React, Vue, Svelte, and Solid for upgrading a Todo web UI.
+
+        Write artifacts/framework-decision.md.
+
+        Include only:
+        - short comparison table
+        - selected framework
+        - 3 reasons for selection
+
+        Keep it concise.
+
+  - name: define_micro_contract
+    agent: contractor
+    depends_on: [research_framework_choice]
+    input:
+      task: |
+        Read artifacts/framework-decision.md.
+
+        Write EXACTLY one JSON object to artifacts/upgrade-contract.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "selectedFramework":"...",
+          "scope":"micro-step frontend upgrade",
+          "rules":["one responsibility per step","max 2 files per step"],
+          "definitionOfDone":"core files and component slices created"
+        }
+
+  - name: setup_package_json
+    agent: generator
+    depends_on: [define_micro_contract]
+    input:
+      task: |
+        Read artifacts/upgrade-contract.json.
+
+        Create only this file:
+        - packages/web/package.json
+
+        Requirements:
+        - React 19
+        - react-dom 19
+        - Vite 6
+        - TypeScript 5
+        - scripts: dev, build, preview
+
+  - name: setup_ts_and_vite
+    agent: generator
+    depends_on: [setup_package_json]
+    input:
+      task: |
+        Create only these files:
+        - packages/web/tsconfig.json
+        - packages/web/vite.config.ts
+
+        Requirements:
+        - TS config for React + Vite
+        - Vite dev server config
+        - API proxy to http://localhost:3001
+
+  - name: setup_entry_files
+    agent: generator
+    depends_on: [setup_ts_and_vite]
+    input:
+      task: |
+        Create only these files:
+        - packages/web/index.html
+        - packages/web/src/main.tsx
+
+        Requirements:
+        - root div in index.html
+        - main.tsx renders App component
+
+  - name: create_app_shell
+    agent: generator
+    depends_on: [setup_entry_files]
+    input:
+      task: |
+        Create only these files:
+        - packages/web/src/App.tsx
+        - packages/web/src/types/todo.ts
+
+        Requirements:
+        - App shell with header, stats area, content area, footer
+        - Todo type definition
+        - minimal placeholder state allowed
+
+  - name: create_api_module
+    agent: generator
+    depends_on: [create_app_shell]
+    input:
+      task: |
+        Create only these files:
+        - packages/web/src/services/api.ts
+        - packages/web/src/components/TodoForm.tsx
+
+        Requirements:
+        - api.ts exposes getTodos, createTodo, updateTodo, deleteTodo
+        - TodoForm provides text input + submit button
+
+  - name: create_list_components
+    agent: generator
+    depends_on: [create_api_module]
+    input:
+      task: |
+        Create only these files:
+        - packages/web/src/components/TodoList.tsx
+        - packages/web/src/components/TodoItem.tsx
+
+        Requirements:
+        - TodoList renders list of todos
+        - TodoItem renders checkbox, text, delete button
+
+  - name: wire_app_logic
+    agent: generator
+    depends_on: [create_list_components]
+    input:
+      task: |
+        Update only this file:
+        - packages/web/src/App.tsx
+
+        Requirements:
+        - fetch todos on mount
+        - add/toggle/delete handlers
+        - stats for total/remaining/completed
+        - render TodoForm and TodoList
+
+  - name: create_base_styles
+    agent: generator
+    depends_on: [wire_app_logic]
+    input:
+      task: |
+        Create only this file:
+        - packages/web/src/App.css
+
+        Requirements:
+        - container/card layout
+        - header and stats styling
+        - form styling
+        - list/item styling
+        - completed state
+        - footer styling
+        - responsive mobile breakpoint
+
+  - name: evaluate_micro_upgrade
+    agent: evaluator
+    depends_on: [create_base_styles]
+    input:
+      task: |
+        Evaluate the micro-step frontend upgrade.
+
+        Check:
+        - required files exist
+        - component split is reasonable
+        - App wiring exists
+        - API module exists
+        - style file exists
+
+        Write artifacts/micro-upgrade-qa.json.
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"micro-upgrade-structure-ok","failedChecks":[],"signature":"micro-upgrade-structure-ok"}

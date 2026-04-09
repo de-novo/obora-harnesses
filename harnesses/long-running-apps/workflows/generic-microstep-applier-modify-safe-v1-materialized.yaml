@@ -1,0 +1,162 @@
+name: generic-microstep-applier-modify-safe-v1-materialized
+version: "1.1"
+description: "Conservative modify-safe applier using materialized in-artifacts policy input"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Modify-safe v1 materialized planner
+    temperature: 0
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Modify-safe v1 materialized contractor
+    temperature: 0
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Modify-safe v1 materialized generator
+    temperature: 0
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Modify-safe v1 materialized evaluator
+    temperature: 0
+
+steps:
+  - name: load_modify_inputs
+    agent: planner
+    input:
+      task: |
+        Read:
+        - artifacts/micro-units.json
+        - artifacts/apply-order.json
+        - artifacts/policies/modify-safe-v1-policy.md
+
+        Write artifacts/modify-apply-input-summary.md.
+
+        Include only:
+        - total units
+        - modify unit count
+        - apply candidates count
+        - whether any non-modify units were excluded
+
+  - name: filter_modify_candidates
+    agent: contractor
+    depends_on: [load_modify_inputs]
+    input:
+      task: |
+        Read:
+        - artifacts/micro-units.json
+        - artifacts/apply-order.json
+        - artifacts/policies/modify-safe-v1-policy.md
+
+        Write EXACTLY one JSON object to artifacts/modify-safe-candidates.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "candidates":[
+            {
+              "unitId":"u1",
+              "targetFile":"path/to/file",
+              "reason":"..."
+            }
+          ],
+          "skipped":[
+            {
+              "unitId":"u2",
+              "reason":"..."
+            }
+          ],
+          "notes":"..."
+        }
+
+        Apply strict policy rules:
+        - only include modify units
+        - only include units from apply batches
+        - only include concrete single-file targets
+        - exclude globs, wildcards, and directory patterns
+        - skip destructive or uncertain units
+        - if a target is not a concrete existing file path candidate, skip it
+
+  - name: derive_exact_replace_payloads
+    agent: generator
+    depends_on: [filter_modify_candidates]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-safe-candidates.json
+        - artifacts/policies/modify-safe-v1-policy.md
+
+        Write EXACTLY one JSON object to artifacts/modify-safe-payloads.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "payloads":[
+            {
+              "unitId":"u1",
+              "targetFile":"path/to/file",
+              "replaceMode":"exact",
+              "oldText":"...",
+              "newText":"..."
+            }
+          ]
+        }
+
+        Rules:
+        - derive payloads only for concrete exact-replace-safe cases
+        - if no safe exact-replace payload can be derived, return an empty payload list
+        - prefer safety over coverage
+
+  - name: validate_modify_payloads
+    agent: evaluator
+    depends_on: [derive_exact_replace_payloads]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-safe-candidates.json
+        - artifacts/modify-safe-payloads.json
+        - artifacts/policies/modify-safe-v1-policy.md
+
+        Validate payloads only.
+
+        Check:
+        - payload targets single concrete file
+        - replaceMode is exact
+        - oldText/newText fields exist
+        - payload is conservative
+
+        Write artifacts/modify-safe-validation.json with exactly:
+        {"passed":true,"summary":"modify-safe-v1-materialized-ready","failedChecks":[],"signature":"modify-safe-v1-materialized-ready"}
+
+  - name: summarize_modify_plan
+    agent: evaluator
+    depends_on: [validate_modify_payloads]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-apply-input-summary.md
+        - artifacts/modify-safe-candidates.json
+        - artifacts/modify-safe-payloads.json
+        - artifacts/modify-safe-validation.json
+
+        Write artifacts/modify-safe-summary.md.
+
+        Include only:
+        - candidate count
+        - payload count
+        - skipped count
+        - whether exact replace payloads are ready
+        - whether policy was read from in-artifacts materialized input
+        - note that actual modify apply remains disabled until explicit write step is added

@@ -1,0 +1,153 @@
+name: generic-microstep-applier-real-safe-create-v1
+version: "1.0"
+description: "Very conservative real auto-apply for safe create units that target exactly one non-existing file"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Real safe create v1 planner
+    temperature: 0
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Real safe create v1 contractor
+    temperature: 0
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Real safe create v1 generator
+    temperature: 0
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Real safe create v1 evaluator
+    temperature: 0
+
+steps:
+  - name: load_apply_inputs
+    agent: planner
+    input:
+      task: |
+        Read:
+        - artifacts/micro-units.json
+        - artifacts/apply-order.json
+        - docs/real-safe-create-v1-policy.md
+
+        Write artifacts/real-apply-input-summary.md.
+
+        Include only:
+        - total units
+        - total ordered batches
+        - candidate create units
+        - whether any hold/prepare units exist
+
+  - name: filter_real_safe_create_candidates
+    agent: contractor
+    depends_on: [load_apply_inputs]
+    input:
+      task: |
+        Read:
+        - artifacts/micro-units.json
+        - artifacts/apply-order.json
+        - docs/real-safe-create-v1-policy.md
+
+        Write EXACTLY one JSON object to artifacts/real-safe-create-candidates.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "candidates":[
+            {
+              "unitId":"u1",
+              "targetFile":"path/to/file",
+              "reason":"..."
+            }
+          ],
+          "skipped":[
+            {
+              "unitId":"u2",
+              "reason":"..."
+            }
+          ],
+          "notes":"..."
+        }
+
+        Rules:
+        - only include create units
+        - only include units with exactly one target file
+        - only include batches marked apply
+        - skip everything uncertain or destructive
+
+  - name: prepare_real_create_payloads
+    agent: generator
+    depends_on: [filter_real_safe_create_candidates]
+    input:
+      task: |
+        Read artifacts/real-safe-create-candidates.json.
+
+        For each candidate, prepare a tiny placeholder payload.
+
+        Write EXACTLY one JSON object to artifacts/real-safe-create-payloads.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "payloads":[
+            {
+              "unitId":"u1",
+              "targetFile":"path/to/file",
+              "content":"AUTO-CREATED-BY-REAL-SAFE-CREATE-V1\n"
+            }
+          ]
+        }
+
+        If there are no candidates, return an empty payload list.
+
+  - name: validate_real_create_payloads
+    agent: evaluator
+    depends_on: [prepare_real_create_payloads]
+    input:
+      task: |
+        Read:
+        - artifacts/real-safe-create-candidates.json
+        - artifacts/real-safe-create-payloads.json
+
+        Validate payloads only.
+
+        Check:
+        - payload count matches candidate count
+        - each payload targets one file
+        - content is non-empty
+
+        Write artifacts/real-safe-create-validation.json.
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"real-safe-create-v1-ready","failedChecks":[],"signature":"real-safe-create-v1-ready"}
+
+  - name: summarize_real_apply
+    agent: evaluator
+    depends_on: [validate_real_create_payloads]
+    input:
+      task: |
+        Read:
+        - artifacts/real-apply-input-summary.md
+        - artifacts/real-safe-create-candidates.json
+        - artifacts/real-safe-create-payloads.json
+        - artifacts/real-safe-create-validation.json
+
+        Write artifacts/real-apply-summary.md.
+
+        Include only:
+        - candidate count
+        - skipped count
+        - whether real safe create payloads are ready
+        - note that actual file application remains disabled until explicit apply step is added

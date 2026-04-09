@@ -1,0 +1,29 @@
+name: sdk-8002-repro-write-only
+version: "1.0"
+description: "Minimal repro: single-step write only"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Minimal writer
+    temperature: 0
+
+steps:
+  - name: write_file
+    agent: generator
+    input:
+      task: |
+        Write exactly this content to artifacts/out.txt:
+
+        SDK_8002 repro test: write-only success marker
+
+        Do not write anything else.

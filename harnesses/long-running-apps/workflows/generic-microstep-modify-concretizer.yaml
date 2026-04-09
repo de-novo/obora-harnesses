@@ -1,0 +1,168 @@
+name: generic-microstep-modify-concretizer
+version: "1.0"
+description: "Concretizes broad modify units into conservative single-file modify candidates"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Modify concretizer planner
+    temperature: 0
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Modify concretizer contractor
+    temperature: 0
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Modify concretizer evaluator
+    temperature: 0
+
+steps:
+  - name: load_concretization_inputs
+    agent: planner
+    input:
+      task: |
+        Read:
+        - artifacts/micro-units.json
+        - artifacts/apply-order.json
+        - artifacts/discovery/tree-structure.md
+        - artifacts/discovery/documentation-catalog.md
+        - artifacts/discovery/workflow-inventory.md
+        - artifacts/discovery/script-inventory.md
+        - docs/modify-concretization-policy.md
+
+        Write artifacts/modify-concretization-input-summary.md.
+
+        Include only:
+        - modify unit count
+        - pattern-based target count
+        - whether discovery inventories are present
+        - likely candidate domains (docs/workflows/scripts)
+
+  - name: extract_modify_pattern_units
+    agent: contractor
+    depends_on: [load_concretization_inputs]
+    input:
+      task: |
+        Read:
+        - artifacts/micro-units.json
+        - artifacts/apply-order.json
+        - docs/modify-concretization-policy.md
+
+        Write EXACTLY one JSON object to artifacts/modify-pattern-units.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "units":[
+            {
+              "unitId":"u17",
+              "sourcePattern":"docs/**/*.md",
+              "reason":"..."
+            }
+          ],
+          "skipped":[
+            {
+              "unitId":"u29",
+              "reason":"..."
+            }
+          ],
+          "notes":"..."
+        }
+
+        Rules:
+        - only include modify units
+        - keep glob/pattern targets that can be concretized
+        - skip destructive modes
+        - note whether each unit is apply or prepare
+
+  - name: derive_concrete_file_candidates
+    agent: contractor
+    depends_on: [extract_modify_pattern_units]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-pattern-units.json
+        - artifacts/discovery/tree-structure.md
+        - artifacts/discovery/documentation-catalog.md
+        - artifacts/discovery/workflow-inventory.md
+        - artifacts/discovery/script-inventory.md
+        - docs/modify-concretization-policy.md
+
+        Write EXACTLY one JSON object to artifacts/modify-concrete-candidates.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "candidates":[
+            {
+              "unitId":"u17",
+              "sourcePattern":"docs/**/*.md",
+              "targetFile":"docs/architecture.md",
+              "reason":"...",
+              "priority":"high|medium|low",
+              "exactReplaceReady":false
+            }
+          ],
+          "skippedUnits":[
+            {
+              "unitId":"u29",
+              "reason":"..."
+            }
+          ],
+          "notes":"..."
+        }
+
+        Rules:
+        - output only concrete single-file candidates
+        - exclude wildcard-only targets
+        - prefer small conservative subsets
+        - prefer docs/workflows/scripts candidates
+
+  - name: validate_concrete_candidates
+    agent: evaluator
+    depends_on: [derive_concrete_file_candidates]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-concrete-candidates.json
+        - docs/modify-concretization-policy.md
+
+        Validate candidate quality only.
+
+        Check:
+        - targetFile is concrete, not glob
+        - candidates are single-file
+        - no destructive modes leaked through
+        - wildcard-only units are skipped
+
+        Write artifacts/modify-concretization-validation.json with exactly:
+        {"passed":true,"summary":"modify-concretization-ready","failedChecks":[],"signature":"modify-concretization-ready"}
+
+  - name: summarize_concretization
+    agent: evaluator
+    depends_on: [validate_concrete_candidates]
+    input:
+      task: |
+        Read:
+        - artifacts/modify-concretization-input-summary.md
+        - artifacts/modify-concrete-candidates.json
+        - artifacts/modify-concretization-validation.json
+
+        Write artifacts/modify-concretization-summary.md.
+
+        Include only:
+        - concrete candidate count
+        - skipped unit count
+        - whether exactReplaceReady candidates exist
+        - whether this output is suitable for modify-safe applier input

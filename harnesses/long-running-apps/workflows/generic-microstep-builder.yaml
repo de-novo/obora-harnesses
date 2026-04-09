@@ -1,0 +1,251 @@
+name: generic-microstep-builder
+version: "2.0"
+description: "Generic reusable change-engine workflow that derives discovery notes, phase plans, impact-aware micro-units, and execution summaries from requirements and policy"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Generic goal interpreter and phase planner
+    temperature: 0.1
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Generic micro-unit contractor
+    temperature: 0
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Generic evaluator and summarizer
+    temperature: 0
+
+steps:
+  - name: discover_current_state
+    agent: planner
+    input:
+      task: |
+        Read the workflow input goal, context, constraints, and successCriteria.
+
+        Also read this policy document:
+        - docs/microstep-phase-policy.md
+
+        Derive the minimum current-state discovery needed before planning.
+
+        Write artifacts/current-state.md.
+
+        Include only:
+        - whether existing project state matters
+        - likely target area(s)
+        - what must be inspected before changes
+        - possible impact zones
+        - whether destructive change risk exists
+
+  - name: interpret_goal
+    agent: planner
+    depends_on: [discover_current_state]
+    input:
+      task: |
+        Read:
+        - artifacts/current-state.md
+        - docs/microstep-phase-policy.md
+        - workflow input goal, context, constraints, and successCriteria
+
+        Interpret the requested work.
+
+        Write artifacts/goal-interpretation.md.
+
+        Include only:
+        - task type
+        - primary change mode
+        - target surface or subsystem
+        - risk level
+        - whether discovery is required
+        - whether research is required
+        - whether setup is required
+        - whether implementation is required
+        - whether targeted modification is required
+        - whether refactor/restructure is required
+        - whether deletion/prune is required
+        - whether style/presentation is required
+        - whether evaluation is required
+
+  - name: derive_phase_plan
+    agent: planner
+    depends_on: [interpret_goal]
+    input:
+      task: |
+        Read:
+        - artifacts/current-state.md
+        - artifacts/goal-interpretation.md
+        - docs/microstep-phase-policy.md
+
+        Derive a phase plan for this specific request.
+
+        Write artifacts/phase-plan.md.
+
+        Include only:
+        - selected phases in execution order
+        - skipped phases and why
+        - expansion decisions
+        - reduction decisions
+        - impact-sensitive or destructive phases if any
+        - failure handling notes if relevant
+
+  - name: derive_micro_units
+    agent: contractor
+    depends_on: [derive_phase_plan]
+    input:
+      task: |
+        Read:
+        - artifacts/current-state.md
+        - artifacts/goal-interpretation.md
+        - artifacts/phase-plan.md
+        - docs/microstep-phase-policy.md
+
+        Write EXACTLY one JSON object to artifacts/micro-units.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "workUnits":[
+            {
+              "id":"u1",
+              "phase":"...",
+              "mode":"create|modify|delete|refactor|restructure|audit|migrate|prune",
+              "goal":"...",
+              "targetFiles":["..."],
+              "constraints":["..."],
+              "validation":["..."],
+              "impactNotes":"..."
+            }
+          ],
+          "executionRules":["..."],
+          "notes":"..."
+        }
+
+        Rules:
+        - keep units extremely small
+        - prefer 1-2 target files per unit
+        - split broad scopes aggressively
+        - include mode on every unit
+        - if a unit is destructive, include explicit impactNotes
+        - do not include implementation content, only the execution plan
+
+  - name: validate_phase_selection
+    agent: evaluator
+    depends_on: [derive_micro_units]
+    input:
+      task: |
+        Read:
+        - artifacts/goal-interpretation.md
+        - artifacts/phase-plan.md
+        - docs/microstep-phase-policy.md
+
+        Validate phase selection only.
+
+        Check:
+        - selected phases are consistent with the request
+        - skipped phases have reasons
+        - destructive or impact-sensitive phases are called out when needed
+
+        Write artifacts/phase-selection-eval.json.
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"phase-selection-ok","failedChecks":[],"signature":"phase-selection-ok"}
+
+  - name: validate_unit_scope
+    agent: evaluator
+    depends_on: [validate_phase_selection]
+    input:
+      task: |
+        Read:
+        - artifacts/micro-units.json
+        - docs/microstep-phase-policy.md
+
+        Validate micro-unit scope only.
+
+        Check:
+        - units are sufficiently small
+        - unit scope is not broad
+        - execution rules exist
+        - mode exists on every unit
+
+        Write artifacts/unit-scope-eval.json.
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"unit-scope-ok","failedChecks":[],"signature":"unit-scope-ok"}
+
+  - name: validate_impact_annotations
+    agent: evaluator
+    depends_on: [validate_unit_scope]
+    input:
+      task: |
+        Read:
+        - artifacts/current-state.md
+        - artifacts/goal-interpretation.md
+        - artifacts/micro-units.json
+
+        Validate impact handling only.
+
+        Check:
+        - destructive or impact-sensitive actions are annotated
+        - risky units are identifiable
+        - impact notes are present where needed
+
+        Write artifacts/impact-eval.json.
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"impact-annotations-ok","failedChecks":[],"signature":"impact-annotations-ok"}
+
+  - name: summarize_plan
+    agent: evaluator
+    depends_on: [validate_impact_annotations]
+    input:
+      task: |
+        Read:
+        - artifacts/current-state.md
+        - artifacts/goal-interpretation.md
+        - artifacts/phase-plan.md
+        - artifacts/micro-units.json
+        - artifacts/phase-selection-eval.json
+        - artifacts/unit-scope-eval.json
+        - artifacts/impact-eval.json
+
+        Write artifacts/plan-eval.json with exactly this JSON object:
+        {"passed":true,"summary":"generic-change-plan-derived","failedChecks":[],"signature":"generic-change-plan-derived"}
+
+        Also write artifacts/execution-summary.md.
+
+        Include only:
+        - primary change mode
+        - selected phases
+        - skipped phases
+        - unit count
+        - risky units if any
+        - recommended next action to execute the units
+
+inputs:
+  schema:
+    type: object
+    properties:
+      goal:
+        type: string
+      context:
+        type: string
+      constraints:
+        type: array
+        items:
+          type: string
+      successCriteria:
+        type: array
+        items:
+          type: string
+    required: [goal]

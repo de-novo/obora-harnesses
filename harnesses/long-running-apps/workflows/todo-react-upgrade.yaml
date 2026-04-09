@@ -1,0 +1,179 @@
+name: todo-react-upgrade
+version: "1.0"
+description: "Upgrade Todo Web UI from vanilla HTML to React 19 + Vite + TypeScript"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: ./packages/web
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: React implementation agent
+    temperature: 0.1
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: React evaluator
+    temperature: 0
+
+steps:
+  - name: setup_react_vite
+    agent: generator
+    input:
+      task: |
+        Setup React 19 + Vite + TypeScript in packages/web.
+
+        Read the framework decision from: /Users/denovo/workspace/github/obora-harnesses/docs/frontend-framework-decision-2026.md
+
+        Create:
+        - packages/web/package.json (React 19, Vite 6, TypeScript)
+        - packages/web/tsconfig.json
+        - packages/web/vite.config.ts (with API proxy to localhost:3001)
+        - packages/web/index.html
+        - packages/web/src/main.tsx
+        - packages/web/src/App.tsx (placeholder)
+        - packages/web/src/App.css
+        - packages/web/src/vite-env.d.ts
+
+        Dependencies:
+        - react@^19
+        - react-dom@^19
+        - typescript@^5
+        - vite@^6
+        - @vitejs/plugin-react@^4
+
+        Scripts:
+        - "dev": "vite"
+        - "build": "tsc && vite build"
+        - "preview": "vite preview"
+
+  - name: create_types
+    agent: generator
+    depends_on: [setup_react_vite]
+    input:
+      task: |
+        Create TypeScript type definitions.
+
+        Create packages/web/src/types/todo.ts:
+
+        ```typescript
+        export interface Todo {
+          id: string;
+          text: string;
+          completed: boolean;
+          createdAt: string;
+        }
+
+        export interface CreateTodoRequest {
+          text: string;
+        }
+
+        export interface UpdateTodoRequest {
+          completed?: boolean;
+          text?: string;
+        }
+        ```
+
+  - name: create_api_service
+    agent: generator
+    depends_on: [create_types]
+    input:
+      task: |
+        Create API service module.
+
+        Read existing vanilla JS: packages/web/app.js (to understand current API calls)
+
+        Create packages/web/src/services/api.ts:
+
+        - Base URL: http://localhost:3001
+        - Functions:
+          - getTodos(): Promise<Todo[]>
+          - createTodo(text: string): Promise<Todo>
+          - updateTodo(id: string, updates: UpdateTodoRequest): Promise<Todo>
+          - deleteTodo(id: string): Promise<void>
+
+        Use fetch API with proper error handling.
+
+  - name: create_components
+    agent: generator
+    depends_on: [create_api_service]
+    input:
+      task: |
+        Create React components.
+
+        Read existing HTML/CSS:
+        - packages/web/index.html (structure)
+        - packages/web/styles.css (styling)
+
+        Create components:
+        - packages/web/src/components/TodoForm.tsx (add new todo)
+        - packages/web/src/components/TodoList.tsx (display list)
+        - packages/web/src/components/TodoItem.tsx (individual todo)
+
+        Each component should:
+        - Use TypeScript
+        - Match existing HTML structure
+        - Keep same CSS classes
+
+  - name: create_app_component
+    agent: generator
+    depends_on: [create_components]
+    input:
+      task: |
+        Create main App component.
+
+        Update packages/web/src/App.tsx:
+
+        - Import TodoForm, TodoList components
+        - Manage todo state with useState
+        - Fetch todos on mount with useEffect
+        - Implement handlers:
+          - handleAdd(text)
+          - handleToggle(id)
+          - handleDelete(id)
+        - Display stats (total, remaining, completed)
+        - Match existing HTML structure
+
+        Update packages/web/src/App.css:
+        - Copy styles from packages/web/styles.css
+        - Adjust any class names if needed
+
+  - name: evaluate_react_upgrade
+    agent: evaluator
+    depends_on: [create_app_component]
+    on_fail:
+      goto: setup_react_vite
+      max_iterations: 2
+      escalate_on_exhaust: fail
+    input:
+      task: |
+        Evaluate the React upgrade.
+
+        Check:
+        - package.json has correct dependencies
+        - TypeScript config is valid
+        - Vite config has API proxy
+        - All components exist and are typed
+        - API service has all functions
+        - App component manages state correctly
+
+        Write artifacts/react-upgrade-qa.json.
+
+        Then return ONLY a strict ValidationResult JSON object.
+        No markdown fences. No prose.
+
+        ValidationResult shape:
+        {
+          "passed": true or false,
+          "summary": "...",
+          "failedChecks": [
+            {"name":"...","message":"...","file":"..."}
+          ],
+          "signature": "stable-short-signature"
+        }

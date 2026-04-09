@@ -1,0 +1,116 @@
+name: todo-frontend-research
+version: "1.0"
+description: "Research modern frontend frameworks for 2026"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Frontend framework researcher
+    temperature: 0.2
+
+steps:
+  - name: research_react
+    agent: planner
+    input:
+      task: |
+        Research React 19 for 2026 production use.
+
+        Use web search with query: "React 19 features production 2026"
+
+        Write findings to artifacts/react-research.md.
+
+        Include:
+        - Latest version
+        - Key features (Server Components, etc.)
+        - Bundle size
+        - Performance characteristics
+        - TypeScript support
+        - Ecosystem maturity
+
+  - name: research_vue
+    agent: planner
+    depends_on: [research_react]
+    input:
+      task: |
+        Research Vue 4 for 2026 production use.
+
+        Use web search with query: "Vue 4 composition API production 2026"
+
+        Write findings to artifacts/vue-research.md.
+
+        Include:
+        - Latest version
+        - Key features
+        - Bundle size
+        - Performance
+        - TypeScript support
+        - Ecosystem
+
+  - name: research_svelte
+    agent: planner
+    depends_on: [research_vue]
+    input:
+      task: |
+        Research Svelte 6 for 2026 production use.
+
+        Use web search with query: "Svelte 6 runes performance 2026"
+
+        Write findings to artifacts/svelte-research.md.
+
+        Include:
+        - Latest version
+        - Key features (Runes, etc.)
+        - Bundle size
+        - Compilation approach
+        - TypeScript support
+
+  - name: research_solid
+    agent: planner
+    depends_on: [research_svelte]
+    input:
+      task: |
+        Research Solid 3 for 2026 production use.
+
+        Use web search with query: "Solid 3 fine-grained reactivity 2026"
+
+        Write findings to artifacts/solid-research.md.
+
+        Include:
+        - Latest version
+        - Key features (fine-grained reactivity)
+        - Bundle size
+        - Performance
+        - TypeScript support
+
+  - name: make_decision
+    agent: planner
+    depends_on: [research_solid]
+    input:
+      task: |
+        Read all research files:
+        - artifacts/react-research.md
+        - artifacts/vue-research.md
+        - artifacts/svelte-research.md
+        - artifacts/solid-research.md
+
+        Write artifacts/framework-decision.md with:
+        - Comparison table (features, bundle, performance, ecosystem)
+        - Pros/cons for Todo app use case
+        - Final recommendation with rationale
+        - Selection criteria
+
+        Then write artifacts/upgrade-contract.json:
+        {
+          "selectedFramework": "...",
+          "selectionRationale": "...",
+          "scope": "Upgrade packages/web from vanilla HTML to selected framework",
+          "acceptanceCriteria": ["Framework configured", "All features work", "Build succeeds"],
+          "taskBreakdown": ["Setup framework", "Migrate components", "Migrate styles", "Test"]
+        }

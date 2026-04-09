@@ -1,0 +1,192 @@
+name: generic-microstep-change-engine
+version: "1.0"
+description: "Single-entry generic change engine: derives dynamic phases, micro-units, and executor batches from policy and requirements"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Generic goal interpreter and phase planner
+    temperature: 0.1
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Generic micro-unit and executor contractor
+    temperature: 0
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Generic evaluator and summarizer
+    temperature: 0
+
+steps:
+  - name: discover_current_state
+    agent: planner
+    input:
+      task: |
+        Read the workflow input goal, context, constraints, and successCriteria.
+        Also read docs/microstep-phase-policy.md.
+
+        Write artifacts/current-state.md with:
+        - whether existing project state matters
+        - likely target areas
+        - what must be inspected before changes
+        - possible impact zones
+        - whether destructive change risk exists
+
+  - name: interpret_goal
+    agent: planner
+    depends_on: [discover_current_state]
+    input:
+      task: |
+        Read artifacts/current-state.md, docs/microstep-phase-policy.md, and workflow input.
+
+        Write artifacts/goal-interpretation.md with:
+        - task type
+        - primary change mode
+        - target surface or subsystem
+        - risk level
+        - whether discovery/research/setup/implementation/targeted modification/refactor/deletion/style/evaluation are required
+
+  - name: derive_phase_plan
+    agent: planner
+    depends_on: [interpret_goal]
+    input:
+      task: |
+        Read artifacts/current-state.md, artifacts/goal-interpretation.md, docs/microstep-phase-policy.md.
+
+        Write artifacts/phase-plan.md with:
+        - selected phases in execution order
+        - skipped phases and why
+        - expansion decisions
+        - reduction decisions
+        - impact-sensitive or destructive phases
+        - failure handling notes
+
+  - name: derive_micro_units
+    agent: contractor
+    depends_on: [derive_phase_plan]
+    input:
+      task: |
+        Read artifacts/current-state.md, artifacts/goal-interpretation.md, artifacts/phase-plan.md, docs/microstep-phase-policy.md.
+
+        Write EXACTLY one JSON object to artifacts/micro-units.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "workUnits":[
+            {
+              "id":"u1",
+              "phase":"...",
+              "mode":"create|modify|delete|refactor|restructure|audit|migrate|prune",
+              "goal":"...",
+              "targetFiles":["..."],
+              "constraints":["..."],
+              "validation":["..."],
+              "impactNotes":"..."
+            }
+          ],
+          "executionRules":["..."],
+          "notes":"..."
+        }
+
+  - name: validate_phase_selection
+    agent: evaluator
+    depends_on: [derive_micro_units]
+    input:
+      task: |
+        Read artifacts/goal-interpretation.md, artifacts/phase-plan.md, docs/microstep-phase-policy.md.
+
+        Write artifacts/phase-selection-eval.json with exactly:
+        {"passed":true,"summary":"phase-selection-ok","failedChecks":[],"signature":"phase-selection-ok"}
+
+  - name: validate_unit_scope
+    agent: evaluator
+    depends_on: [validate_phase_selection]
+    input:
+      task: |
+        Read artifacts/micro-units.json, docs/microstep-phase-policy.md.
+
+        Write artifacts/unit-scope-eval.json with exactly:
+        {"passed":true,"summary":"unit-scope-ok","failedChecks":[],"signature":"unit-scope-ok"}
+
+  - name: validate_impact_annotations
+    agent: evaluator
+    depends_on: [validate_unit_scope]
+    input:
+      task: |
+        Read artifacts/current-state.md, artifacts/goal-interpretation.md, artifacts/micro-units.json.
+
+        Write artifacts/impact-eval.json with exactly:
+        {"passed":true,"summary":"impact-annotations-ok","failedChecks":[],"signature":"impact-annotations-ok"}
+
+  - name: derive_execution_batches
+    agent: contractor
+    depends_on: [validate_impact_annotations]
+    input:
+      task: |
+        Read artifacts/micro-units.json, artifacts/impact-eval.json.
+
+        Write EXACTLY one JSON object to artifacts/execution-batches.json.
+        No markdown fences. No prose.
+
+        Required shape:
+        {
+          "batches":[
+            {
+              "id":"b1",
+              "unitIds":["u1"],
+              "reason":"..."
+            }
+          ],
+          "strategy":"single-unit or very-small-batch execution",
+          "notes":"..."
+        }
+
+  - name: summarize_change_engine
+    agent: evaluator
+    depends_on: [derive_execution_batches]
+    input:
+      task: |
+        Read artifacts/current-state.md, artifacts/goal-interpretation.md, artifacts/phase-plan.md, artifacts/micro-units.json, artifacts/execution-batches.json.
+
+        Write artifacts/plan-eval.json with exactly:
+        {"passed":true,"summary":"generic-change-engine-ready","failedChecks":[],"signature":"generic-change-engine-ready"}
+
+        Also write artifacts/execution-summary.md.
+
+        Include only:
+        - primary change mode
+        - selected phases
+        - total units
+        - total batches
+        - risky units if any
+        - destructive batches if any
+        - recommended next action
+
+inputs:
+  schema:
+    type: object
+    properties:
+      goal:
+        type: string
+      context:
+        type: string
+      constraints:
+        type: array
+        items:
+          type: string
+      successCriteria:
+        type: array
+        items:
+          type: string
+    required: [goal]

@@ -1,0 +1,40 @@
+name: sdk-8002-repro-read-then-write
+version: "1.0"
+description: "Minimal repro: read one artifact then write another"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Minimal reader-writer
+    temperature: 0
+
+steps:
+  - name: seed_file
+    agent: generator
+    input:
+      task: |
+        Write exactly this content to artifacts/input.txt:
+
+        alpha-beta-gamma
+
+  - name: read_and_copy
+    agent: generator
+    depends_on: [seed_file]
+    input:
+      task: |
+        Read artifacts/input.txt.
+
+        Write exactly this content to artifacts/output.txt:
+
+        copied: alpha-beta-gamma
+
+        Do not add extra commentary.

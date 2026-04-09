@@ -1,0 +1,33 @@
+name: sdk-8002-styles-ladder-small
+version: "1.0"
+description: "Styles ladder small"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+    - path: ./packages/web
+      mode: "rwx"
+
+agents:
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Style ladder small agent
+    temperature: 0.1
+
+steps:
+  - name: write_small_style
+    agent: generator
+    input:
+      task: |
+        Write packages/web/src/App.css with a small Todo app stylesheet.
+        Include only:
+        - container
+        - form
+        - list
+        - item
+        - completed state

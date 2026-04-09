@@ -1,0 +1,107 @@
+name: sdk-8002-repro-long-chain-short-prompts
+version: "1.0"
+description: "Stress repro: long chain with short prompts"
+
+sandbox:
+  enabled: true
+  paths:
+    - path: .
+      mode: "rwx"
+    - path: ./artifacts
+      mode: "rwx"
+
+agents:
+  planner:
+    provider: zai
+    model: glm-4.7
+    role: Short prompt planner
+    temperature: 0
+  contractor:
+    provider: zai
+    model: glm-4.7
+    role: Short prompt contractor
+    temperature: 0
+  generator:
+    provider: zai
+    model: glm-4.7
+    role: Short prompt generator
+    temperature: 0
+  evaluator:
+    provider: zai
+    model: glm-4.7
+    role: Short prompt evaluator
+    temperature: 0
+
+steps:
+  - name: s1
+    agent: planner
+    input:
+      task: |
+        Write artifacts/s1.txt with exactly:
+        s1
+
+  - name: s2
+    agent: contractor
+    depends_on: [s1]
+    input:
+      task: |
+        Read artifacts/s1.txt.
+        Write artifacts/s2.txt with exactly:
+        s2
+
+  - name: s3
+    agent: generator
+    depends_on: [s2]
+    input:
+      task: |
+        Read artifacts/s2.txt.
+        Write artifacts/s3.txt with exactly:
+        s3
+
+  - name: s4
+    agent: evaluator
+    depends_on: [s3]
+    input:
+      task: |
+        Read artifacts/s3.txt.
+        Write artifacts/s4.txt with exactly:
+        s4
+
+  - name: s5
+    agent: planner
+    depends_on: [s4]
+    input:
+      task: |
+        Read artifacts/s4.txt.
+        Write artifacts/s5.txt with exactly:
+        s5
+
+  - name: s6
+    agent: contractor
+    depends_on: [s5]
+    input:
+      task: |
+        Read artifacts/s5.txt.
+        Write artifacts/s6.txt with exactly:
+        s6
+
+  - name: s7
+    agent: generator
+    depends_on: [s6]
+    input:
+      task: |
+        Read artifacts/s6.txt.
+        Write artifacts/s7.txt with exactly:
+        s7
+
+  - name: s8
+    agent: evaluator
+    depends_on: [s7]
+    input:
+      task: |
+        Read artifacts/s7.txt.
+        Write artifacts/final.txt with exactly:
+        LONG-CHAIN-OK
+
+        Then return ONLY this JSON object:
+        {"passed":true,"summary":"LONG-CHAIN-OK","failedChecks":[],"signature":"long-chain-ok"}
