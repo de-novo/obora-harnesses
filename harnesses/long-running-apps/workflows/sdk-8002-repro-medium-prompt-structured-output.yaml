@@ -12,11 +12,10 @@ sandbox:
 
 agents:
   evaluator:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Structured output stress agent
-    temperature: 0
-
+    temperature: ${OBORA_TEMPERATURE:-0}
 steps:
   - name: structured_output_stress
     agent: evaluator

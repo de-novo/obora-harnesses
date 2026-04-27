@@ -12,26 +12,25 @@ sandbox:
 
 agents:
   planner:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Short prompt planner
-    temperature: 0
+    temperature: ${OBORA_TEMPERATURE:-0}
   contractor:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Short prompt contractor
-    temperature: 0
+    temperature: ${OBORA_TEMPERATURE:-0}
   generator:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Short prompt generator
-    temperature: 0
+    temperature: ${OBORA_TEMPERATURE:-0}
   evaluator:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Short prompt evaluator
-    temperature: 0
-
+    temperature: ${OBORA_TEMPERATURE:-0}
 steps:
   - name: s1
     agent: planner

@@ -10,8 +10,8 @@ sandbox:
 
 agents:
   planner:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Frontend framework researcher
     temperature: 0.2
 

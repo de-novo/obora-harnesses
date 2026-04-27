@@ -12,26 +12,25 @@ sandbox:
 
 agents:
   planner:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Real safe create v1.1 planner
-    temperature: 0
+    temperature: ${OBORA_TEMPERATURE:-0}
   contractor:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Real safe create v1.1 contractor
-    temperature: 0
+    temperature: ${OBORA_TEMPERATURE:-0}
   generator:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Real safe create v1.1 generator
-    temperature: 0
+    temperature: ${OBORA_TEMPERATURE:-0}
   evaluator:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Real safe create v1.1 evaluator
-    temperature: 0
-
+    temperature: ${OBORA_TEMPERATURE:-0}
 steps:
   - name: load_apply_inputs
     agent: planner

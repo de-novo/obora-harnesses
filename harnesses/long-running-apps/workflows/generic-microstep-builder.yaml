@@ -12,21 +12,20 @@ sandbox:
 
 agents:
   planner:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Generic goal interpreter and phase planner
     temperature: 0.1
   contractor:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Generic micro-unit contractor
-    temperature: 0
+    temperature: ${OBORA_TEMPERATURE:-0}
   evaluator:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Generic evaluator and summarizer
-    temperature: 0
-
+    temperature: ${OBORA_TEMPERATURE:-0}
 steps:
   - name: discover_current_state
     agent: planner

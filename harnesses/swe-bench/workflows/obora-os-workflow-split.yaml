@@ -4,13 +4,13 @@ description: "Obora-led workflow with split generation steps for cancel-source i
 
 agents:
   solver:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: SWE-bench solving agent
     temperature: 0.1
   validator:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Structured edit validator
     temperature: 0
 

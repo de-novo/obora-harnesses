@@ -12,11 +12,10 @@ sandbox:
 
 agents:
   planner:
-    provider: zai
-    model: glm-4.7
+    provider: ${OBORA_PROVIDER:-zai}
+    model: ${OBORA_MODEL:-glm-4.7}
     role: Large prompt stress agent
-    temperature: 0
-
+    temperature: ${OBORA_TEMPERATURE:-0}
 steps:
   - name: large_prompt_write
     agent: planner
