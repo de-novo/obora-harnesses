@@ -18,6 +18,18 @@ HELPER="$SCRIPT_DIR/structured_repair_helper.py"
 WORKFLOW="${WORKFLOW:-$REPO_ROOT/harnesses/swe-bench/workflows/obora-os-workflow.yaml}"
 CONFIG="${CONFIG:-$REPO_ROOT/harnesses/swe-bench/configs/obora/config.yaml}"
 OBORA_BIN="${OBORA_BIN:-obora}"
+OBORA_PROVIDER="${OBORA_PROVIDER:-}"
+OBORA_MODEL="${OBORA_MODEL:-}"
+
+# Build provider/model flags if env vars are set
+OBORA_PROVIDER_FLAG=""
+OBORA_MODEL_FLAG=""
+if [ -n "$OBORA_PROVIDER" ]; then
+  OBORA_PROVIDER_FLAG="--provider $OBORA_PROVIDER"
+fi
+if [ -n "$OBORA_MODEL" ]; then
+  OBORA_MODEL_FLAG="--model $OBORA_MODEL"
+fi
 
 PASS=0
 FAIL=0
@@ -110,7 +122,7 @@ for SAMPLE_FILE in "${SAMPLE_FILES[@]}"; do
   MAX_POST_VALIDATE_RETRIES=1
   while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
     : > "$RESULT_DIR/obora.log"
-    if (cd "$REPO_DIR" && "$OBORA_BIN" run "$WORKFLOW" --config "$CONFIG" --output-dir "$RESULT_DIR" --timeout ${OBORA_RUN_TIMEOUT_MS:-240000}) 2>&1 | tee "$RESULT_DIR/obora.log"; then
+    if (cd "$REPO_DIR" && "$OBORA_BIN" run "$WORKFLOW" --config "$CONFIG" --output-dir "$RESULT_DIR" --timeout ${OBORA_RUN_TIMEOUT_MS:-240000} $OBORA_PROVIDER_FLAG $OBORA_MODEL_FLAG) 2>&1 | tee "$RESULT_DIR/obora.log"; then
       RUN_OK=true
       break
     fi
@@ -223,7 +235,7 @@ PY
         RETRY_COUNT=$((RETRY_COUNT + 1))
         while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
           : > "$RESULT_DIR/obora.log"
-          if (cd "$REPO_DIR" && "$OBORA_BIN" run "$WORKFLOW" --config "$CONFIG" --output-dir "$RESULT_DIR" --timeout ${OBORA_RUN_TIMEOUT_MS:-240000}) 2>&1 | tee "$RESULT_DIR/obora.log"; then
+          if (cd "$REPO_DIR" && "$OBORA_BIN" run "$WORKFLOW" --config "$CONFIG" --output-dir "$RESULT_DIR" --timeout ${OBORA_RUN_TIMEOUT_MS:-240000} $OBORA_PROVIDER_FLAG $OBORA_MODEL_FLAG) 2>&1 | tee "$RESULT_DIR/obora.log"; then
             RUN_OK=true
             break
           fi
