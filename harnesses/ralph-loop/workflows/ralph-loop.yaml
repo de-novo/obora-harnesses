@@ -1,0 +1,98 @@
+name: ralph-loop
+version: "1.0"
+description: "Ralph Loop - Infinite retry with context rotation and guardrail learning"
+
+# Ralph Loop 핵심: 컨텍스트는 파일과 git에 저장, LLM 메모리는 매번 초기화
+agents:
+  worker:
+    role: Task executor
+    temperature: 0.1
+  validator:
+    role: Validation agent
+    temperature: 0
+
+steps:
+  - name: setup_workspace
+    agent: worker
+    pattern: file-write
+    input:
+      path: artifacts/.ralph/progress.md
+      content: |
+        # Ralph Loop Progress
+        ## Task: ${TASK_DESCRIPTION}
+        ## Status: IN_PROGRESS
+        ## Attempt: 0
+        ## Last Action: Setup
+
+  - name: execute_task
+    agent: worker
+    config:
+      maxToolRounds: 64
+    input:
+      task: |
+        Read artifacts/.ralph/progress.md and artifacts/.ralph/guardrails.md (if exists).
+        
+        Based on the current progress and guardrails, execute the next logical step.
+        
+        Rules:
+        1. NEVER assume previous context - always read progress.md first
+        2. After each action, update progress.md with what you did
+        3. If you encounter a failure pattern from guardrails.md, follow the prescribed fix
+        4. Keep responses concise - state goes to files, not conversation
+        
+        Task: ${TASK_DESCRIPTION}
+
+  - name: validate_result
+    agent: validator
+    pattern: peer-review
+    config:
+      reviewers: 1
+    input:
+      task: |
+        Validate the work done in execute_task step.
+        
+        Check:
+        1. Did the worker read progress.md before acting?
+        2. Did the worker update progress.md after acting?
+        3. Are there any signs of context pollution (references to non-existent previous turns)?
+        4. Did the worker follow guardrails.md rules?
+        
+        Output validation result as JSON:
+        {
+          "passed": true/false,
+          "issues": ["issue1", "issue2"],
+          "guardrail_suggestion": "New rule to add to guardrails.md if applicable"
+        }
+
+  - name: update_guardrails
+    agent: worker
+    pattern: file-write
+    condition:
+      if: "${VALIDATION_PASSED} == false"
+    input:
+      path: artifacts/.ralph/guardrails.md
+      content: |
+        # Ralph Loop Guardrails
+        ## Auto-generated from failures
+        
+        ${GUARDRAIL_SUGGESTION}
+
+  - name: check_completion
+    agent: worker
+    pattern: file-write
+    input:
+      path: artifacts/.ralph/progress.md
+      content: |
+        # Ralph Loop Progress
+        ## Task: ${TASK_DESCRIPTION}
+        ## Status: ${COMPLETION_STATUS}
+        ## Attempt: ${ATTEMPT_COUNT}
+        ## Last Action: ${LAST_ACTION}
+
+  - name: rotate_context
+    agent: system
+    # 토큰 사용량이 80% 이상이면 강제 컨텍스트 교체
+    condition:
+      if: "${TOKEN_USAGE} > 80"
+    input:
+      task: "Context rotation triggered. Progress saved to files. Starting fresh context."
