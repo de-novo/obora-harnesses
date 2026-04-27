@@ -10,9 +10,10 @@ SMOKE_SCRIPT="$REPO_ROOT/harnesses/long-running-apps/scripts/smoke_todo_cli_slic
 MATERIALIZE_SCRIPT="$REPO_ROOT/harnesses/long-running-apps/scripts/materialize_todo_cli_artifacts.py"
 ARTIFACTS_DIR="$TARGET_DIR/artifacts"
 RUN_TIMEOUT="${OBORA_RUN_TIMEOUT_MS:-300000}"
+OBORA_BIN="${OBORA_BIN:-obora}"
 MAX_ATTEMPTS=3
-ATTEMPT=1
 RUN_JSON=""
+ATTEMPT=1
 LAST_CODE=0
 
 rm -rf "$ARTIFACTS_DIR"
@@ -26,7 +27,7 @@ cp "$TARGET_DIR/qa-report.json" "$ARTIFACTS_DIR/qa-report.json" 2>/dev/null || t
 while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
   find "$ARTIFACTS_DIR" -maxdepth 1 -name 'todo-cli-enhanced-*.json' -delete
   set +e
-  obora run "$WORKFLOW" --config "$CONFIG" --output-dir "$ARTIFACTS_DIR" --timeout "$RUN_TIMEOUT" >"$ARTIFACTS_DIR/run.out" 2>"$ARTIFACTS_DIR/run.err"
+  "$OBORA_BIN" run "$WORKFLOW" --config "$CONFIG" --output-dir "$ARTIFACTS_DIR" --timeout "$RUN_TIMEOUT" >"$ARTIFACTS_DIR/run.out" 2>"$ARTIFACTS_DIR/run.err"
   LAST_CODE=$?
   set -e
   if [ $LAST_CODE -eq 0 ]; then

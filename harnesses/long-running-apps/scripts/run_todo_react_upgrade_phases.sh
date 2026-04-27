@@ -15,7 +15,7 @@ run_phase() {
   echo "=== RUN $phase ===" | tee "$report"
   (
     cd "$WORKDIR"
-    obora run "$workflow" \
+    "$OBORA_BIN" run "$workflow" \
       --config "$CONFIG" \
       --model glm-4.7 \
       --timeout 300000 \

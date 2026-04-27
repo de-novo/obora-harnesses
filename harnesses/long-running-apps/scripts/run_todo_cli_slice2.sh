@@ -28,7 +28,7 @@ cp "$TARGET_DIR/README.md" "$ARTIFACTS_DIR/README.seed.md" 2>/dev/null || true
 while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
   find "$ARTIFACTS_DIR" -maxdepth 1 -name 'todo-cli-enhanced-*.json' -delete
   set +e
-  obora run "$WORKFLOW" --config "$CONFIG" --output-dir "$ARTIFACTS_DIR" --timeout "$RUN_TIMEOUT" >"$ARTIFACTS_DIR/run.out" 2>"$ARTIFACTS_DIR/run.err"
+  "$OBORA_BIN" run "$WORKFLOW" --config "$CONFIG" --output-dir "$ARTIFACTS_DIR" --timeout "$RUN_TIMEOUT" >"$ARTIFACTS_DIR/run.out" 2>"$ARTIFACTS_DIR/run.err"
   LAST_CODE=$?
   set -e
   if [ $LAST_CODE -eq 0 ]; then

@@ -15,7 +15,7 @@ mkdir -p "$WORKDIR/artifacts" "$WORKDIR/packages/web/src/components" "$WORKDIR/p
 echo "=== RUN todo-react-upgrade-micro ===" | tee "$REPORT"
 (
   cd "$WORKDIR"
-  obora run "$ROOT/harnesses/long-running-apps/workflows/todo-react-upgrade-micro.yaml" \
+  "$OBORA_BIN" run "$ROOT/harnesses/long-running-apps/workflows/todo-react-upgrade-micro.yaml" \
     --config "$CONFIG" \
     --model glm-4.7 \
     --timeout 300000 \

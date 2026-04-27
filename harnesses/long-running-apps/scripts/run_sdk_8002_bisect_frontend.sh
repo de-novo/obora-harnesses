@@ -17,8 +17,10 @@ run_one() {
 
   echo "=== RUN $name ===" | tee "$report"
   (
-    cd "$WORKDIR"
-    obora run "$workflow" \
+OBORA_BIN="${OBORA_BIN:-obora}"
+
+# Run the workflow
+"$OBORA_BIN" run "$workflow" \
       --config "$CONFIG" \
       --model glm-4.7 \
       --timeout 300000 \

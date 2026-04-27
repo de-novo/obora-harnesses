@@ -6,21 +6,14 @@ const os = require('os');
 
 const DATA_DIR = path.join(os.homedir(), '.todo-cli-minimal');
 const DATA_FILE = path.join(DATA_DIR, 'todos.json');
-const TEMP_FILE = path.join(DATA_DIR, 'todos.tmp.json');
 
 function ensureDataDir() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-  } catch (err) {
-    console.error(`Error creating data directory: ${err.message}`);
-    process.exit(1);
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 }
 
-function loadTodos() {
-  ensureDataDir();
+function readTodos() {
   if (!fs.existsSync(DATA_FILE)) {
     return { todos: [], nextId: 1 };
   }
@@ -28,87 +21,84 @@ function loadTodos() {
     const data = fs.readFileSync(DATA_FILE, 'utf8');
     return JSON.parse(data);
   } catch (err) {
-    console.error(`Error reading todos: ${err.message}`);
+    console.error('Error: Failed to read todos file. It may be corrupted.');
     process.exit(1);
   }
 }
 
-function saveTodos(data) {
+function writeTodos(data) {
   ensureDataDir();
+  const tempFile = path.join(DATA_DIR, `todos.${Date.now()}.tmp`);
   try {
-    const json = JSON.stringify(data, null, 2);
-    fs.writeFileSync(TEMP_FILE, json, 'utf8');
-    fs.renameSync(TEMP_FILE, DATA_FILE);
+    fs.writeFileSync(tempFile, JSON.stringify(data, null, 2), 'utf8');
+    fs.renameSync(tempFile, DATA_FILE);
   } catch (err) {
-    console.error(`Error saving todos: ${err.message}`);
+    console.error('Error: Failed to write todos file.');
     process.exit(1);
   }
 }
 
-function cmdHelp() {
-  console.log('Todo CLI - Minimal version');
+function showHelp() {
+  console.log('Usage: todo <command>');
   console.log('');
-  console.log('Usage:');
-  console.log('  todo help          Show this help message');
-  console.log('  todo add <text>    Add a new todo');
-  console.log('  todo list          Show all todos');
-  process.exit(0);
+  console.log('Commands:');
+  console.log('  help          Show this help message');
+  console.log('  add <text>    Add a new todo');
+  console.log('  list          Show all todos');
 }
 
 function cmdAdd(text) {
   if (!text || text.trim() === '') {
-    console.error('Error: todo text cannot be empty');
+    console.error('Error: Todo text cannot be empty.');
     process.exit(1);
   }
-  const data = loadTodos();
-  const todo = {
-    id: data.nextId++,
+  const data = readTodos();
+  const newTodo = {
+    id: data.nextId,
     text: text.trim(),
     done: false
   };
-  data.todos.push(todo);
-  saveTodos(data);
-  console.log(`Added: [${todo.id}] ${todo.text}`);
-  process.exit(0);
+  data.todos.push(newTodo);
+  data.nextId += 1;
+  writeTodos(data);
+  console.log(`Added: ${newTodo.text}`);
 }
 
 function cmdList() {
-  const data = loadTodos();
+  const data = readTodos();
   if (data.todos.length === 0) {
-    console.log('No todos found.');
-    process.exit(0);
+    console.log('No todos yet.');
+    return;
   }
   data.todos.forEach(todo => {
-    const status = todo.done ? '✓' : ' ';
-    console.log(`[${status}] [${todo.id}] ${todo.text}`);
+    console.log(`${todo.id}: [${todo.done ? 'x' : ' '}] ${todo.text}`);
   });
-  process.exit(0);
 }
 
 function main() {
   const args = process.argv.slice(2);
+  if (args.length === 0) {
+    showHelp();
+    process.exit(0);
+  }
+
   const command = args[0];
+  const commandArgs = args.slice(1);
 
   switch (command) {
     case 'help':
-    case '--help':
-    case '-h':
-      cmdHelp();
+      showHelp();
       break;
     case 'add':
-      cmdAdd(args.slice(1).join(' '));
+      cmdAdd(commandArgs.join(' '));
       break;
     case 'list':
       cmdList();
       break;
     default:
-      if (!command) {
-        cmdHelp();
-      } else {
-        console.error(`Unknown command: ${command}`);
-        console.error('Run "todo help" for usage.');
-        process.exit(1);
-      }
+      console.error(`Error: Unknown command '${command}'`);
+      showHelp();
+      process.exit(1);
   }
 }
 
