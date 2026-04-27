@@ -57,13 +57,22 @@ cat > "$WORK_DIR/artifacts/.ralph/progress.md" <<EOF
 ## Last Action: Setup complete, ready to start
 EOF
 
-# 랄프 루프 실행
+# 랄프 루프 실행 (10회 목표)
 ITERATION=0
 PASSED=false
+COMPLETION_RATE=0
 
-while [ $ITERATION -lt $MAX_ITERATIONS ] && [ "$PASSED" = false ]; do
+while [ $ITERATION -lt 10 ] && [ "$PASSED" = false ]; do
   ITERATION=$((ITERATION + 1))
-  log_info "=== Iteration $ITERATION/$MAX_ITERATIONS ==="
+  log_info "=== Iteration $ITERATION/10 ==="
+
+  # 토큰 사용량 체크 (60% 이상이면 컨텍스트 교체)
+  TOKEN_USAGE=$(cat "$WORK_DIR/artifacts/.ralph/token_usage.json" 2>/dev/null | jq -r '.usage // 0' || echo "0")
+  if [ "$TOKEN_USAGE" -gt 60 ]; then
+    log_info "🔄 Context rotation at ${TOKEN_USAGE}%"
+    # 컨텍스트 교체 표시
+    echo '{"rotated": true, "at_iteration": '$ITERATION'}' > "$WORK_DIR/artifacts/.ralph/context_rotation.json"
+  fi
 
   # 환경 변수 설정
   export TASK_DESCRIPTION
@@ -106,19 +115,25 @@ EOF
   sleep 2
 done
 
-# 결과 집계
+# 결과 집계 (10회 기준)
 if [ "$PASSED" = true ]; then
   echo "PASS" > "$RUN_DIR/status.txt"
+  log_info "✅ 10회 내 완료 (실제 반복: $ITERATION)"
 else
-  echo "FAIL_MAX_ITERATIONS" > "$RUN_DIR/status.txt"
+  echo "FAIL_10_ITERATIONS" > "$RUN_DIR/status.txt"
+  log_info "❌ 10회 내 미완료"
 fi
 
-cat > "$RUN_DIR/meta.json" <<EOF
+# 메트릭 저장
+cat > "$RUN_DIR/metrics.json" <<EOF
 {
   "task": "$TASK_DESCRIPTION",
-  "iterations": $ITERATION,
+  "iterations_used": $ITERATION,
+  "iterations_target": 10,
   "passed": $PASSED,
-  "max_iterations": $MAX_ITERATIONS
+  "completion_rate": $COMPLETION_RATE,
+  "context_rotations": $(ls "$WORK_DIR/artifacts/.ralph/context_rotation.json" 2>/dev/null | wc -l | tr -d ' '),
+  "guardrail_count": $(grep -c "^##" "$WORK_DIR/artifacts/.ralph/guardrails.md" 2>/dev/null || echo 0)
 }
 EOF
 

@@ -1,14 +1,21 @@
-name: ralph-loop
-version: "1.0"
-description: "Ralph Loop - Infinite retry with context rotation and guardrail learning"
+name: ralph-loop-10
+version: "1.1"
+description: "Ralph Loop - 10 iteration goal with progress tracking"
 
-# Ralph Loop 핵심: 컨텍스트는 파일과 git에 저장, LLM 메모리는 매번 초기화
+# 10회 반복 목표 설정
+config:
+  maxIterations: 10
+  tokenThreshold: 60  # 60%에서 컨텍스트 교체 (더 빈번하게)
+
 agents:
   worker:
     role: Task executor
     temperature: 0.1
   validator:
     role: Validation agent
+    temperature: 0
+  progress_tracker:
+    role: Progress tracker
     temperature: 0
 
 steps:
